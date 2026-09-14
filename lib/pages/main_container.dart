@@ -3,6 +3,7 @@ import 'dashboard_page.dart';
 import 'cbam_page.dart';
 import 'market_page.dart';
 import 'idri_page.dart';
+import 'profile_page.dart';
 
 class MainContainer extends StatefulWidget {
   const MainContainer({super.key});
@@ -16,7 +17,7 @@ class _MainContainerState extends State<MainContainer> {
     const DashboardPage(),
     const CbamPage(),
     const IdriPage(), // Index 2: IDRI Screen
-    const Center(child: Text('Profile Screen')),
+    const ProfilePage(), // Index 3: Profile Screen
     const MarketPage(), // Index 4: Market
   ];
 
