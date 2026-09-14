@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dashboard_page.dart';
 import 'cbam_page.dart';
 import 'market_page.dart';
+import 'idri_page.dart';
 
 class MainContainer extends StatefulWidget {
   const MainContainer({super.key});
@@ -14,7 +15,7 @@ class _MainContainerState extends State<MainContainer> {
   final List<Widget> _screens = [
     const DashboardPage(),
     const CbamPage(),
-    const Center(child: Text('IDRI Screen')),
+    const IdriPage(), // Index 2: IDRI Screen
     const Center(child: Text('Profile Screen')),
     const MarketPage(), // Index 4: Market
   ];
