@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dashboard_page.dart';
 import 'cbam_page.dart';
+import 'market_page.dart';
 
 class MainContainer extends StatefulWidget {
   const MainContainer({super.key});
@@ -15,18 +16,27 @@ class _MainContainerState extends State<MainContainer> {
     const CbamPage(),
     const Center(child: Text('IDRI Screen')),
     const Center(child: Text('Profile Screen')),
+    const MarketPage(), // Index 4: Market
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: _screens[_navIndex],
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: const Color(0xFF006D44),
-        shape: const CircleBorder(),
-        elevation: 4,
-        child: const Icon(Icons.storefront, color: Colors.white, size: 28),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: () => setState(() => _navIndex = 4),
+            backgroundColor: _navIndex == 4 ? const Color(0xFF10B981) : const Color(0xFF006D44),
+            shape: const CircleBorder(),
+            elevation: 4,
+            child: const Icon(Icons.storefront, color: Colors.white, size: 28),
+          ),
+          const SizedBox(height: 2),
+          Text('Market', style: TextStyle(fontSize: 10, color: _navIndex == 4 ? const Color(0xFF10B981) : const Color(0xFF6B7280), fontWeight: _navIndex == 4 ? FontWeight.bold : FontWeight.normal)),
+        ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
