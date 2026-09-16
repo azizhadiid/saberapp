@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login_page.dart';
 import 'main_container.dart';
 
@@ -14,12 +15,43 @@ class _RegisterPageState extends State<RegisterPage> {
   final _passCtrl = TextEditingController();
   bool _obscure = true;
 
-  void _doRegister() {
+  bool _isLoading = false;
+
+  Future<void> _doRegister() async {
     if (_namaCtrl.text.trim().isEmpty || _emailCtrl.text.trim().isEmpty || _industriCtrl.text.trim().isEmpty || _passCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Semua field wajib diisi!')));
       return;
     }
-    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const MainContainer()), (route) => false);
+    
+    setState(() => _isLoading = true);
+    try {
+      final res = await Supabase.instance.client.auth.signUp(
+        email: _emailCtrl.text.trim(),
+        password: _passCtrl.text.trim(),
+        emailRedirectTo: 'saber://login-callback/',
+        data: {
+          'company_name': _namaCtrl.text.trim(),
+          'industry_type': _industriCtrl.text.trim(),
+        }
+      );
+      
+      if (mounted) {
+        if (res.session == null) {
+          // Jika Supabase "Confirm Email" dinyalakan
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Registrasi sukses! Silakan cek email Anda untuk verifikasi.')));
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginPage()));
+        } else {
+          // Jika tidak ada konfirmasi email
+          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const MainContainer()), (route) => false);
+        }
+      }
+    } on AuthException catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: ${error.message}')));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Terjadi kesalahan tidak terduga')));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -52,7 +84,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 child: ElevatedButton(
                   onPressed: _doRegister,
                   style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                  child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Text('Daftar Sekarang', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), SizedBox(width: 8), Icon(Icons.arrow_forward, size: 18)]),
+                  child: _isLoading 
+                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
+                    : const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Text('Daftar Sekarang', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), SizedBox(width: 8), Icon(Icons.arrow_forward, size: 18)]),
                 ),
               ),
               const SizedBox(height: 24),
