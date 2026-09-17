@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CbamPage extends StatefulWidget {
   const CbamPage({super.key});
@@ -20,19 +21,96 @@ class _CbamPageState extends State<CbamPage> {
   ];
 
   bool _showResult = false;
+  bool _isSaving = false;
+  bool _isLoadingHistory = true;
+  List<dynamic> _historyLogs = [];
 
   // Logic Variables
   double _volume = 0;
   double _intensity = 0;
-
   double _threshold = 0.80;
   double _taxRateRp = 0;
-  String _currencyPrefix = 'Rp. ';
-
   double _excess = 0;
   double _totalTax = 0;
   double _percentage = 0;
   bool _isWarning = false;
+  List<double> _projectedTaxes = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchInitialData();
+  }
+
+  Future<void> _fetchInitialData() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) return;
+
+      final profileRes = await Supabase.instance.client
+          .from('companies')
+          .select('carbon_intensity')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      if (profileRes != null && profileRes['carbon_intensity'] != null) {
+        _intCtrl.text = profileRes['carbon_intensity'].toString();
+      }
+      await _fetchHistoryLogs();
+    } catch (e) {
+      debugPrint('Error fetch cbam init: $e');
+    }
+  }
+
+  Future<void> _fetchHistoryLogs() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) return;
+      final logsRes = await Supabase.instance.client
+          .from('cbam_logs')
+          .select()
+          .eq('user_id', user.id)
+          .order('created_at', ascending: false);
+      setState(() {
+        _historyLogs = logsRes;
+        _isLoadingHistory = false;
+      });
+    } catch (e) {
+      debugPrint('Error fetch history: $e');
+      if (mounted) setState(() => _isLoadingHistory = false);
+    }
+  }
+
+  Future<void> _saveLogToDatabase() async {
+    setState(() => _isSaving = true);
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) throw 'User belum login';
+
+      await Supabase.instance.client.from('cbam_logs').insert({
+        'user_id': user.id,
+        'export_volume': _volume,
+        'carbon_intensity': _intensity,
+        'destination': _selectedDestination,
+        'tax_amount_rp': _totalTax,
+      });
+
+      await _fetchHistoryLogs();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Laporan disimpan ke Database!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal menyimpan: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
 
   void _calculate() {
     setState(() {
@@ -58,8 +136,29 @@ class _CbamPageState extends State<CbamPage> {
       _excess = max(0, _intensity - _threshold);
       _isWarning = _excess > 0 && _taxRateRp > 0;
 
-      _totalTax = _excess * _volume * _taxRateRp;
       _percentage = (_intensity / _threshold) * 100;
+
+      double savings = max(0, _threshold - _intensity) * _volume * _taxRateRp;
+
+      if (_isWarning) {
+        _totalTax = _excess * _volume * _taxRateRp;
+        _projectedTaxes = [
+          _totalTax * 0.05, // 2026
+          _totalTax * 0.10, // 2027
+          _totalTax * 0.20, // 2028
+          _totalTax * 0.50, // 2029
+          _totalTax * 1.0, // 2030
+        ];
+      } else {
+        _totalTax = savings;
+        _projectedTaxes = [
+          savings * 0.10, // 2026
+          savings * 0.30, // 2027
+          savings * 0.80, // 2028
+          savings * 0.50, // 2029
+          savings * 0.20, // 2030
+        ];
+      }
 
       _showResult = true;
     });
@@ -152,7 +251,7 @@ class _CbamPageState extends State<CbamPage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withValues(alpha: 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -273,7 +372,7 @@ class _CbamPageState extends State<CbamPage> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
+                      color: Colors.black.withValues(alpha: 0.03),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -512,10 +611,12 @@ class _CbamPageState extends State<CbamPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Align(
+                    Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'DENDA PINALTI PAJAK',
+                        _isWarning
+                            ? 'DENDA PINALTI PAJAK'
+                            : 'POTENSI PENGHEMATAN',
                         style: TextStyle(
                           color: Color(0xFF4B5563),
                           fontSize: 11,
@@ -527,7 +628,7 @@ class _CbamPageState extends State<CbamPage> {
                     const Divider(),
                     const SizedBox(height: 12),
                     Text(
-                      _isWarning ? currencyFormatter.format(_totalTax) : 'Rp 0',
+                      currencyFormatter.format(_totalTax),
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
@@ -539,7 +640,7 @@ class _CbamPageState extends State<CbamPage> {
                     const SizedBox(height: 4),
                     Text(
                       _taxRateRp > 0
-                          ? 'Proyeksi biaya pajak per ton CO2e\nadalah ${currencyFormatter.format(_taxRateRp)}'
+                          ? 'Proyeksi biaya tahunan sebesar\n${currencyFormatter.format(_taxRateRp)}/ton CO2e'
                           : 'Belum ada penerapan harga karbon',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
@@ -548,11 +649,58 @@ class _CbamPageState extends State<CbamPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    if (_isWarning)
-                      CustomPaint(
-                        size: const Size(double.infinity, 60),
-                        painter: LineChartPainter(),
-                      ),
+                    Column(
+                      children: [
+                        CustomPaint(
+                          size: const Size(double.infinity, 60),
+                          painter: LineChartPainter(
+                            _projectedTaxes,
+                            _isWarning,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '2026',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Color(0xFF9CA3AF),
+                              ),
+                            ),
+                            Text(
+                              '2027',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Color(0xFF9CA3AF),
+                              ),
+                            ),
+                            Text(
+                              '2028',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Color(0xFF9CA3AF),
+                              ),
+                            ),
+                            Text(
+                              '2029',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Color(0xFF9CA3AF),
+                              ),
+                            ),
+                            Text(
+                              '2030',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Color(0xFF9CA3AF),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -571,32 +719,44 @@ class _CbamPageState extends State<CbamPage> {
                 width: double.infinity,
                 height: 60,
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: _isSaving ? null : _saveLogToDatabase,
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFE5E7EB)),
+                    side: const BorderSide(
+                      color: Color(0xFF006D44),
+                      width: 1.5,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.description,
-                        color: Color(0xFF006D44),
-                        size: 20,
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Buat Laporan',
-                        style: TextStyle(
-                          color: Color(0xFF111827),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                  child: _isSaving
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF006D44),
+                          ),
+                        )
+                      : const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.save_outlined,
+                              color: Color(0xFF006D44),
+                              size: 20,
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Simpan Ke Histori',
+                              style: TextStyle(
+                                color: Color(0xFF111827),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -621,6 +781,95 @@ class _CbamPageState extends State<CbamPage> {
                   ),
                 ],
               ),
+              const SizedBox(height: 32),
+              const Text(
+                'Riwayat Kalkulasi CBAM Anda',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (_isLoadingHistory)
+                const Center(child: CircularProgressIndicator())
+              else if (_historyLogs.isEmpty)
+                const Text(
+                  'Belum ada histori data pajak tersimpan.',
+                  style: TextStyle(color: Color(0xFF6B7280)),
+                )
+              else
+                ..._historyLogs.map((log) {
+                  final dt = DateTime.parse(log['created_at']).toLocal();
+                  final dateStr = DateFormat('dd MMM yyyy, HH:mm').format(dt);
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3F4F6),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.receipt_long,
+                            color: Color(0xFF4B5563),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                log['destination'] ?? 'Unknown',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${NumberFormat.currency(locale: 'id_ID', symbol: '', decimalDigits: 0).format(log['export_volume'])} Ton  |  Intensitas: ${log['carbon_intensity']}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF6B7280),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                NumberFormat.currency(
+                                  locale: 'id_ID',
+                                  symbol: 'Rp ',
+                                  decimalDigits: 0,
+                                ).format(log['tax_amount_rp']),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFFDC2626),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          dateStr,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFF9CA3AF),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
               const SizedBox(height: 100),
             ],
           ],
@@ -759,35 +1008,50 @@ class GaugePainter extends CustomPainter {
 }
 
 class LineChartPainter extends CustomPainter {
+  final List<double> data;
+  final bool isWarning;
+  LineChartPainter(this.data, this.isWarning);
+
   @override
   void paint(Canvas canvas, Size size) {
+    if (data.isEmpty) return;
+
+    Color chartColor = isWarning
+        ? const Color(0xFFB91C1C)
+        : const Color(0xFF10B981);
+
     Paint linePaint = Paint()
-      ..color = const Color(0xFFB91C1C)
+      ..color = chartColor
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
     Paint dotPaint = Paint()
-      ..color = const Color(0xFFB91C1C)
+      ..color = chartColor
       ..style = PaintingStyle.fill;
 
+    double maxVal = data.reduce(max);
+    if (maxVal == 0) maxVal = 1; // prevent division by zero
+
     Path path = Path();
-    List<Offset> points = [
-      Offset(0, size.height),
-      Offset(size.width * 0.2, size.height * 0.95),
-      Offset(size.width * 0.4, size.height * 0.7),
-      Offset(size.width * 0.6, size.height * 0.5),
-      Offset(size.width * 0.8, size.height * 0.25),
-      Offset(size.width, 0),
-    ];
+    List<Offset> points = [];
+
+    for (int i = 0; i < data.length; i++) {
+      double x = i * (size.width / (data.length - 1));
+      // Invert Y so highest value is at top (0)
+      double y = size.height - (data[i] / maxVal * size.height);
+      points.add(Offset(x, y));
+    }
+
     path.moveTo(points[0].dx, points[0].dy);
     for (int i = 1; i < points.length; i++) {
       path.lineTo(points[i].dx, points[i].dy);
     }
     canvas.drawPath(path, linePaint);
+
     for (var point in points) {
       canvas.drawCircle(point, 4, dotPaint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant LineChartPainter oldDelegate) => true;
 }

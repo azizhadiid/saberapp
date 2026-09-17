@@ -1,47 +1,4 @@
--- 1. Membuat tabel 'companies' untuk menyimpan data profil perusahaan
-CREATE TABLE IF NOT EXISTS public.companies (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  siinas_id TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- 2. Membuat tabel 'authorized' untuk relasi akun Google/Email ke Perusahaan
-CREATE TABLE IF NOT EXISTS public.authorized (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  company_id UUID REFERENCES public.companies(id) ON DELETE CASCADE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- 3. Mengaktifkan Row Level Security (Keamanan Supabase)
-ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.authorized ENABLE ROW LEVEL SECURITY;
-
--- 4. Membuat Kebijakan RLS (Policy) agar aplikasi Flutter bisa melakukan Insert dan Select
--- Kebijakan untuk tabel companies
-CREATE POLICY "Enable read access for authenticated users" 
-  ON public.companies FOR SELECT 
-  USING (auth.role() = 'authenticated');
-
-CREATE POLICY "Enable insert for authenticated users" 
-  ON public.companies FOR INSERT 
-  WITH CHECK (auth.role() = 'authenticated');
-
-CREATE POLICY "Enable update for authenticated users" 
-  ON public.companies FOR UPDATE
-  USING (auth.role() = 'authenticated');
-
--- Kebijakan untuk tabel authorized
-CREATE POLICY "Enable read access for authorized users" 
-  ON public.authorized FOR SELECT 
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Enable insert for authorized users" 
-  ON public.authorized FOR INSERT 
-  WITH CHECK (auth.uid() = user_id);
-
-  -- 1. Tambahkan kolom metrik ke tabel companies (jika belum ada)
+-- 1. Tambahkan kolom metrik ke tabel companies (jika belum ada)
 ALTER TABLE public.companies 
 ADD COLUMN IF NOT EXISTS current_emission NUMERIC DEFAULT 0,
 ADD COLUMN IF NOT EXISTS carbon_intensity NUMERIC DEFAULT 0,
@@ -87,11 +44,11 @@ CREATE POLICY "Enable read for all authenticated users"
   USING (auth.role() = 'authenticated');
 
 
+  
 
 
 
---   NEW DB -----------------------------------------------------------------------------
--- ==============================================================
+  -- ==============================================================
 -- 1. HAPUS TABEL LAMA (Jika ada, agar tidak bentrok)
 -- ==============================================================
 DROP TABLE IF EXISTS public.authorized CASCADE;
@@ -189,3 +146,78 @@ CREATE POLICY "Enable read for authenticated users"
 CREATE POLICY "Enable read for authenticated users" 
   ON public.top_factories FOR SELECT 
   USING (auth.role() = 'authenticated');
+
+
+  -- Update data tabel compenies:
+  ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+
+
+
+  -- ///// update tabel-tabel
+  -- 1. Tambahkan kolom lokasi ke tabel companies agar formatnya cocok
+ALTER TABLE public.companies ADD COLUMN IF NOT EXISTS location TEXT DEFAULT 'Indonesia';
+
+-- 2. Hapus tabel top_factories yang lama 
+DROP TABLE IF EXISTS public.top_factories CASCADE;
+
+-- 3. Masukkan pabrik pembanding (Krakatau Steel dll) langsung ke tabel companies 
+-- (user_id sengaja dikosongkan karena mereka bukan user login, hanya sebagai dummy pembanding nasional)
+INSERT INTO public.companies (name, siinas_id, location, carbon_intensity) 
+VALUES 
+  ('PT Krakatau Steel', 'KS001', 'Cilegon, Banten', 0.08),
+  ('PT Gunung Raja Paksi', 'GRP002', 'Bekasi, Jawa Barat', 0.11),
+  ('PT Bhirawa Steel', 'BS003', 'Surabaya, Jawa Timur', 0.12);
+
+-- 4. BUAT VIEW OTOMATIS: 'top_factories'
+-- Sistem Supabase akan selalu menghitung peringkat secara LIVE setiap detiknya.
+-- Siapa yang Intensitas Karbon-nya (carbon_intensity) paling kecil, dia otomatis ranking 1!
+CREATE OR REPLACE VIEW public.top_factories AS
+SELECT 
+  ROW_NUMBER() OVER (ORDER BY carbon_intensity ASC) as rank,
+  id as company_id,
+  name,
+  location,
+  carbon_intensity
+FROM public.companies
+WHERE carbon_intensity > 0;
+
+-- 1. Beri izin kepada user yang sudah login (authenticated) untuk MENGUNGGAH foto ke bucket 'profile_perusahaan'
+CREATE POLICY "Izinkan user login upload foto" 
+ON storage.objects FOR INSERT 
+TO authenticated 
+WITH CHECK (bucket_id = 'profile_perusahaan');
+
+-- 2. Beri izin kepada user yang sudah login untuk MEMPERBARUI (replace) foto lama mereka
+CREATE POLICY "Izinkan user login update foto" 
+ON storage.objects FOR UPDATE 
+TO authenticated 
+USING (bucket_id = 'profile_perusahaan');
+
+-- 3. Pastikan semua orang bisa MELIHAT foto tersebut (karena ini foto profil)
+CREATE POLICY "Izinkan semua orang melihat foto" 
+ON storage.objects FOR SELECT 
+USING (bucket_id = 'profile_perusahaan');
+
+
+-- 1. Hapus peraturan lama (kalau sebelumnya sempat di-Run)
+DROP POLICY IF EXISTS "Izinkan user login upload foto" ON storage.objects;
+DROP POLICY IF EXISTS "Izinkan user login update foto" ON storage.objects;
+DROP POLICY IF EXISTS "Izinkan semua orang melihat foto" ON storage.objects;
+
+-- 2. Buat ulang peraturan untuk MENGUNGGAH foto (sesuai nama typo)
+CREATE POLICY "Izinkan user login upload foto" 
+ON storage.objects FOR INSERT 
+TO authenticated 
+WITH CHECK (bucket_id = 'profile_perushaan');
+
+-- 3. Buat ulang peraturan untuk MEMPERBARUI foto (sesuai nama typo)
+CREATE POLICY "Izinkan user login update foto" 
+ON storage.objects FOR UPDATE 
+TO authenticated 
+USING (bucket_id = 'profile_perushaan');
+
+-- 4. Buat ulang peraturan untuk MELIHAT foto (sesuai nama typo)
+CREATE POLICY "Izinkan semua orang melihat foto" 
+ON storage.objects FOR SELECT 
+USING (bucket_id = 'profile_perushaan');
+
