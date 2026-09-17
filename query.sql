@@ -221,3 +221,194 @@ CREATE POLICY "Izinkan semua orang melihat foto"
 ON storage.objects FOR SELECT 
 USING (bucket_id = 'profile_perushaan');
 
+
+
+-- 1. Buat Tabel Histori CBAM (Satu user punya banyak riwayat log)
+CREATE TABLE public.cbam_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  export_volume NUMERIC,
+  carbon_intensity NUMERIC,
+  destination TEXT,
+  tax_amount_rp NUMERIC,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 2. Aktifkan Fitur Keamanan (RLS)
+ALTER TABLE public.cbam_logs ENABLE ROW LEVEL SECURITY;
+
+-- 3. Policy: User HANYA bisa melihat, menambah, dan mengedit log milik mereka sendiri (Tidak bisa melihat punya orang lain)
+CREATE POLICY "Users can manage their own CBAM logs" 
+  ON public.cbam_logs FOR ALL 
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+
+
+
+
+
+
+  -- 1. Buat Tabel (Jika Belum Ada) atau Tambahkan Kolom Baru
+CREATE TABLE IF NOT EXISTS public.green_vendor_markets (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  location TEXT,
+  description TEXT,
+  info_label TEXT,
+  info_value TEXT,
+  verification_status BOOLEAN DEFAULT false,
+  badge_text TEXT,
+  badge_icon TEXT,
+  icon_name TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Jaga-jaga jika tabel sudah ada namun belum memiliki kolom-kolom baru di atas:
+ALTER TABLE public.green_vendor_markets 
+ADD COLUMN IF NOT EXISTS location TEXT,
+ADD COLUMN IF NOT EXISTS description TEXT,
+ADD COLUMN IF NOT EXISTS info_label TEXT,
+ADD COLUMN IF NOT EXISTS info_value TEXT,
+ADD COLUMN IF NOT EXISTS verification_status BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS badge_text TEXT,
+ADD COLUMN IF NOT EXISTS badge_icon TEXT,
+ADD COLUMN IF NOT EXISTS icon_name TEXT;
+
+-- 2. Hapus data lama agar tidak dobel/berantakan
+TRUNCATE TABLE public.green_vendor_markets;
+
+-- 3. Insert 10 Data Dummy!
+INSERT INTO public.green_vendor_markets 
+  (name, category, location, description, info_label, info_value, verification_status, badge_text, badge_icon, icon_name)
+VALUES 
+  (
+    'PT IndoEAF Technologies', 
+    'Teknologi EAF', 
+    'Jakarta Barat', 
+    'Penyedia Mesin Electric Arc Furnace (EAF) skala menengah dengan konsumsi listrik efisien.', 
+    'Efisiensi Karbon:', 
+    '-45%', 
+    true, 
+    'Verified Vendor', 
+    NULL, 
+    'factory'
+  ),
+  (
+    'Koperasi Scrap Baja Jatim', 
+    'Bahan Baku Sirkular (UMKM)', 
+    'Jawa Timur', 
+    'Pengepul besi tua (scrap) skala besar untuk bahan baku baja daur ulang (Circular Steel).', 
+    'Kapasitas Suplai:', 
+    '5.000 Ton/Bulan', 
+    false, 
+    'Koperasi UMKM', 
+    'groups', 
+    'precision_manufacturing'
+  ),
+  (
+    'SolarIndo EPC', 
+    'Energi Terbarukan', 
+    'Banten', 
+    'Instalasi Panel Surya Atap Pabrik (On-Grid) khusus untuk kawasan industri berat.', 
+    'Potensi Penghematan PLN:', 
+    '30%', 
+    true, 
+    'Verified Vendor', 
+    NULL, 
+    'solar_power'
+  ),
+  (
+    'EcoSteel Recycling Hub', 
+    'Bahan Baku Sirkular (UMKM)', 
+    'Cikarang, Bekasi', 
+    'Mitra daur ulang baja industri, mengubah limbah logam menjadi bahan baku siap lebur.', 
+    'Kapasitas Suplai:', 
+    '2.500 Ton/Bulan', 
+    true, 
+    'Verified Vendor', 
+    NULL, 
+    'recycling'
+  ),
+  (
+    'GreenTech Furnace Solutions', 
+    'Teknologi EAF', 
+    'Surabaya', 
+    'Pabrikan komponen tungku busur listrik dengan sertifikasi emisi rendah.', 
+    'Efisiensi Karbon:', 
+    '-35%', 
+    true, 
+    'Verified Vendor', 
+    NULL, 
+    'factory'
+  ),
+  (
+    'Nusantara Biomass', 
+    'Energi Terbarukan', 
+    'Kalimantan Timur', 
+    'Penyedia pelet biomassa dari limbah kelapa sawit sebagai substitusi parsial batu bara.', 
+    'Reduksi Emisi:', 
+    'Sampai 20%', 
+    false, 
+    'B2B Startup', 
+    'eco', 
+    'eco'
+  ),
+  (
+    'PT Baja Sirkular Mandiri', 
+    'Bahan Baku Sirkular (UMKM)', 
+    'Semarang', 
+    'Jaringan pengepul scrap besi dan baja skala menengah untuk industri.', 
+    'Kapasitas Suplai:', 
+    '1.200 Ton/Bulan', 
+    false, 
+    'Koperasi UMKM', 
+    'groups', 
+    'precision_manufacturing'
+  ),
+  (
+    'WindPower Indonesia', 
+    'Energi Terbarukan', 
+    'Sulawesi Selatan', 
+    'Penyedia pasokan listrik dari tenaga angin skala besar (PPA) untuk manufaktur.', 
+    'Sertifikat Energi Hijau:', 
+    'Tersedia', 
+    true, 
+    'Verified Vendor', 
+    NULL, 
+    'solar_power'
+  ),
+  (
+    'EAF Modernization Inc.', 
+    'Teknologi EAF', 
+    'Batam', 
+    'Layanan retrofit dan modernisasi tungku baja lama menjadi teknologi EAF yang hemat energi.', 
+    'Peningkatan Efisiensi:', 
+    '+25%', 
+    true, 
+    'Verified Vendor', 
+    NULL, 
+    'factory'
+  ),
+  (
+    'Scrap Nusantara Jaya', 
+    'Bahan Baku Sirkular (UMKM)', 
+    'Medan', 
+    'Penyedia scrap otomotif terpilah berkualitas tinggi untuk industri peleburan baja.', 
+    'Kapasitas Suplai:', 
+    '3.000 Ton/Bulan', 
+    false, 
+    'Koperasi UMKM', 
+    'groups', 
+    'recycling'
+  );
+
+
+  -- 1. Aktifkan Sistem Keamanan RLS untuk tabel green_vendor_markets
+ALTER TABLE public.green_vendor_markets ENABLE ROW LEVEL SECURITY;
+
+-- 2. Buat "Surat Izin" (Policy) agar Aplikasi bisa MEMBACA datanya
+CREATE POLICY "Izinkan semua orang membaca data market" 
+ON public.green_vendor_markets FOR SELECT 
+USING (true);
