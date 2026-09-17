@@ -124,8 +124,8 @@ class _LoginPageState extends State<LoginPage> {
           Positioned.fill(
             child: Opacity(
               opacity: 0.15,
-              child: Image.network(
-                'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop',
+              child: Image.asset(
+                'assets/img/onboarding.jpg',
                 fit: BoxFit.cover,
                 color: Colors.grey,
                 colorBlendMode: BlendMode.saturation,

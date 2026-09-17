@@ -11,8 +11,8 @@ class OnboardingPage extends StatelessWidget {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.network(
-              'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop',
+            child: Image.asset(
+              'assets/img/onboarding.jpg',
               fit: BoxFit.cover,
             ),
           ),

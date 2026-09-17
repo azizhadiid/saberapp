@@ -161,8 +161,21 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.15,
+              child: Image.asset(
+                'assets/img/onboarding.jpg',
+                fit: BoxFit.cover,
+                color: Colors.grey,
+                colorBlendMode: BlendMode.saturation,
+              ),
+            ),
+          ),
+          SafeArea(
+            child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -349,6 +362,8 @@ class _RegisterPageState extends State<RegisterPage> {
             ],
           ),
         ),
+      ),
+        ],
       ),
     );
   }
