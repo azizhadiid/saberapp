@@ -175,194 +175,220 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ),
           SafeArea(
-            child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 20),
-              Image.asset(
-                'assets/img/logo.png',
-                height: 80,
-                errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.factory, size: 80),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Mulai Perjalanan Hijau\nAnda',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF111827),
-                  height: 1.2,
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Daftarkan perusahaan Anda untuk\nakses intelijen karbon global.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-              ),
-              const SizedBox(height: 32),
-              _buildTextField(
-                label: 'Nama Perusahaan',
-                icon: Icons.person_outline,
-                hint: 'Jhon Doe',
-                controller: _namaCtrl,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                label: 'Email Perusahaan',
-                icon: Icons.mail_outline,
-                hint: 'nama@perusahaan.com',
-                controller: _emailCtrl,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                label: 'Industri',
-                icon: Icons.factory_outlined,
-                hint: 'Masukkan Jenis Anda',
-                controller: _industriCtrl,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                label: 'Kata Sandi',
-                icon: Icons.lock_outline,
-                hint: '........',
-                controller: _passCtrl,
-                isPassword: true,
-                obscure: _obscure,
-                onToggleObscure: () => setState(() => _obscure = !_obscure),
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                label: 'Konfirmasi Kata Sandi',
-                icon: Icons.lock_outline,
-                hint: '........',
-                controller: _passConfirmCtrl,
-                isPassword: true,
-                obscure: _obscureConfirm,
-                onToggleObscure: () =>
-                    setState(() => _obscureConfirm = !_obscureConfirm),
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _doRegister,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 32,
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 3,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(13),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 20),
+                      Image.asset(
+                        'assets/img/logo.png',
+                        height: 80,
+                        errorBuilder: (_, __, ___) =>
+                            const Icon(Icons.factory, size: 80),
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'Mulai Perjalanan Hijau\nAnda',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF111827),
+                          height: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Daftarkan perusahaan Anda untuk\nakses intelijen karbon global.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      _buildTextField(
+                        label: 'Nama Perusahaan',
+                        icon: Icons.person_outline,
+                        hint: 'Jhon Doe',
+                        controller: _namaCtrl,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        label: 'Email Perusahaan',
+                        icon: Icons.mail_outline,
+                        hint: 'nama@perusahaan.com',
+                        controller: _emailCtrl,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        label: 'Industri',
+                        icon: Icons.factory_outlined,
+                        hint: 'Masukkan Jenis Anda',
+                        controller: _industriCtrl,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        label: 'Kata Sandi',
+                        icon: Icons.lock_outline,
+                        hint: '........',
+                        controller: _passCtrl,
+                        isPassword: true,
+                        obscure: _obscure,
+                        onToggleObscure: () =>
+                            setState(() => _obscure = !_obscure),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        label: 'Konfirmasi Kata Sandi',
+                        icon: Icons.lock_outline,
+                        hint: '........',
+                        controller: _passConfirmCtrl,
+                        isPassword: true,
+                        obscure: _obscureConfirm,
+                        onToggleObscure: () =>
+                            setState(() => _obscureConfirm = !_obscureConfirm),
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _doRegister,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF10B981),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
-                        )
-                      : const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Daftar Sekarang',
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 3,
+                                  ),
+                                )
+                              : const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Daftar Sekarang',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Icon(Icons.arrow_forward, size: 18),
+                                  ],
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(child: Divider(color: Colors.grey.shade300)),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'ATAU',
                               style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
                               ),
                             ),
-                            SizedBox(width: 8),
-                            Icon(Icons.arrow_forward, size: 18),
+                          ),
+                          Expanded(child: Divider(color: Colors.grey.shade300)),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      OutlinedButton(
+                        onPressed: _isLoading ? null : _signInWithGoogle,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          backgroundColor: Colors.white,
+                          side: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.network(
+                              'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/120px-Google_%22G%22_logo.svg.png',
+                              height: 24,
+                              errorBuilder: (_, __, ___) =>
+                                  const Icon(Icons.g_mobiledata),
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
+                              'Daftar dengan Google',
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ],
                         ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(child: Divider(color: Colors.grey.shade300)),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'ATAU',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
                       ),
-                    ),
-                  ),
-                  Expanded(child: Divider(color: Colors.grey.shade300)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              OutlinedButton(
-                onPressed: _isLoading ? null : _signInWithGoogle,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  backgroundColor: Colors.white,
-                  side: BorderSide(color: Colors.grey.shade300, width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            'Sudah punya akun? ',
+                            style: TextStyle(color: Color(0xFF6B7280)),
+                          ),
+                          GestureDetector(
+                            onTap: () => Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginPage(),
+                              ),
+                            ),
+                            child: const Text(
+                              'Masuk sekarang',
+                              style: TextStyle(
+                                color: Color(0xFF006D44),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.network(
-                      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/120px-Google_%22G%22_logo.svg.png',
-                      height: 24,
-                      errorBuilder: (_, __, ___) =>
-                          const Icon(Icons.g_mobiledata),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Daftar dengan Google',
-                      style: TextStyle(
-                        color: Colors.black87,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
               ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Sudah punya akun? ',
-                    style: TextStyle(color: Color(0xFF6B7280)),
-                  ),
-                  GestureDetector(
-                    onTap: () => Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoginPage(),
-                      ),
-                    ),
-                    child: const Text(
-                      'Masuk sekarang',
-                      style: TextStyle(
-                        color: Color(0xFF006D44),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
         ],
       ),
     );

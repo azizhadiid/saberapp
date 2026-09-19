@@ -405,10 +405,44 @@ VALUES
   );
 
 
-  -- 1. Aktifkan Sistem Keamanan RLS untuk tabel green_vendor_markets
-ALTER TABLE public.green_vendor_markets ENABLE ROW LEVEL SECURITY;
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.users (id, company_name, industry_type)
+  values (
+    new.id, 
+    COALESCE(new.raw_user_meta_data->>'company_name', new.raw_user_meta_data->>'full_name', 'Pengguna Google'), 
+    COALESCE(new.raw_user_meta_data->>'industry_type', 'Belum Ditentukan')
+  );
+  return new;
+end;
+$$;
 
--- 2. Buat "Surat Izin" (Policy) agar Aplikasi bisa MEMBACA datanya
-CREATE POLICY "Izinkan semua orang membaca data market" 
-ON public.green_vendor_markets FOR SELECT 
-USING (true);
+-- 1. Perbarui fungsi agar memasukkan data ke tabel 'companies' (BUKAN 'users')
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.companies (user_id, name, siinas_id)
+  VALUES (
+    new.id, 
+    -- Ambil nama perusahaan dari register email, JIKA KOSONG (Google) ambil nama akun Google-nya
+    COALESCE(new.raw_user_meta_data->>'company_name', new.raw_user_meta_data->>'full_name', 'Pengguna Google'), 
+    
+    -- Ambil data industri dari register email dan masukkan ke siinas_id, JIKA KOSONG (Google) isi default
+    COALESCE(new.raw_user_meta_data->>'industry_type', 'Tidak Ditentukan')
+  );
+  RETURN new;
+END;
+$$;
+
+-- 2. Pastikan Trigger aktif pada tabel auth.users bawaan Supabase
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
