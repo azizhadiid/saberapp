@@ -105,7 +105,7 @@ class _IdriPageState extends State<IdriPage> {
         throw Exception('GEMINI_API_KEY tidak ditemukan di file .env');
       }
 
-      final model = GenerativeModel(model: 'gemini-3.6-flash', apiKey: apiKey);
+      final model = GenerativeModel(model: 'gemini-3.8-flash', apiKey: apiKey);
       final prompt =
           '''
       Kamu adalah konsultan dekarbonisasi industri ahli. Analisis data pabrik baja berikut:
