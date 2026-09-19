@@ -10,6 +10,7 @@ class MainContainer extends StatefulWidget {
   @override
   State<MainContainer> createState() => _MainContainerState();
 }
+
 class _MainContainerState extends State<MainContainer> {
   int _navIndex = 0;
 
@@ -23,42 +24,65 @@ class _MainContainerState extends State<MainContainer> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+
     return Scaffold(
       body: _screens[_navIndex],
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            onPressed: () => setState(() => _navIndex = 4),
-            backgroundColor: _navIndex == 4 ? const Color(0xFF10B981) : const Color(0xFF006D44),
-            shape: const CircleBorder(),
-            elevation: 4,
-            child: const Icon(Icons.storefront, color: Colors.white, size: 28),
-          ),
-          const SizedBox(height: 2),
-          Text('Market', style: TextStyle(fontSize: 10, color: _navIndex == 4 ? const Color(0xFF10B981) : const Color(0xFF6B7280), fontWeight: _navIndex == 4 ? FontWeight.bold : FontWeight.normal)),
-        ],
-      ),
+      floatingActionButton: isKeyboardVisible
+          ? null
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                FloatingActionButton(
+                  onPressed: () => setState(() => _navIndex = 4),
+                  backgroundColor: _navIndex == 4
+                      ? const Color(0xFF10B981)
+                      : const Color(0xFF006D44),
+                  shape: const CircleBorder(),
+                  elevation: 4,
+                  child: const Icon(
+                    Icons.storefront,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Market',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: _navIndex == 4
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFF6B7280),
+                    fontWeight: _navIndex == 4
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.white,
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8.0,
-        child: SizedBox(
-          height: 60,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.dashboard, 'Dashboard', 0),
-              _buildNavItem(Icons.public, 'CBAM', 1),
-              const SizedBox(width: 40),
-              _buildNavItem(Icons.bar_chart, 'IDRI', 2),
-              _buildNavItem(Icons.person_outline, 'Profile', 3),
-            ],
-          ),
-        ),
-      ),
+      bottomNavigationBar: isKeyboardVisible
+          ? null
+          : BottomAppBar(
+              color: Colors.white,
+              shape: const CircularNotchedRectangle(),
+              notchMargin: 8.0,
+              child: SizedBox(
+                height: 60,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(Icons.dashboard, 'Dashboard', 0),
+                    _buildNavItem(Icons.public, 'CBAM', 1),
+                    const SizedBox(width: 40),
+                    _buildNavItem(Icons.bar_chart, 'IDRI', 2),
+                    _buildNavItem(Icons.person_outline, 'Profile', 3),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 
@@ -71,9 +95,24 @@ class _MainContainerState extends State<MainContainer> {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: isSelected ? const Color(0xFF006D44) : const Color(0xFF9CA3AF), size: 24),
+          Icon(
+            icon,
+            color: isSelected
+                ? const Color(0xFF006D44)
+                : const Color(0xFF9CA3AF),
+            size: 24,
+          ),
           const SizedBox(height: 2),
-          Text(label, style: TextStyle(fontSize: 10, color: isSelected ? const Color(0xFF006D44) : const Color(0xFF9CA3AF), fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: isSelected
+                  ? const Color(0xFF006D44)
+                  : const Color(0xFF9CA3AF),
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
         ],
       ),
     );
