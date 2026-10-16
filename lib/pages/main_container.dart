@@ -6,21 +6,35 @@ import 'idri_page.dart';
 import 'profile_page.dart';
 
 class MainContainer extends StatefulWidget {
-  const MainContainer({super.key});
+  final int initialIndex;
+  final String userRole;
+
+  const MainContainer({
+    super.key,
+    this.initialIndex = 0,
+    this.userRole = 'Perusahaan Industri',
+  });
+
   @override
   State<MainContainer> createState() => _MainContainerState();
 }
 
 class _MainContainerState extends State<MainContainer> {
-  int _navIndex = 0;
+  late int _navIndex;
 
   final List<Widget> _screens = [
-    const DashboardPage(),
-    const CbamPage(),
-    const IdriPage(), // Index 2: IDRI Screen
-    const ProfilePage(), // Index 3: Profile Screen
-    const MarketPage(), // Index 4: Market
+    const DashboardPage(), // Index 0: Dashboard (Pemerintah / Publik / Makro)
+    const CbamPage(),      // Index 1: CBAM Simulator (Perusahaan Eksportir)
+    const IdriPage(),      // Index 2: IDRI Screen (Audit Pabrik & 4 SDGs)
+    const ProfilePage(),   // Index 3: Profile Screen
+    const MarketPage(),    // Index 4: Green Market (Bursa Scrap UMKM & MRF)
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _navIndex = widget.initialIndex.clamp(0, _screens.length - 1);
+  }
 
   @override
   Widget build(BuildContext context) {
