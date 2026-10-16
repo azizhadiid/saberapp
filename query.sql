@@ -446,3 +446,70 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+
+-- ==============================================================
+-- 7. PEMBARUAN SISTEM 3 ROLE EKOSISTEM (SABER KARBON 2026)
+--    Role 1: 'perusahaan_baja' (Default)
+--    Role 2: 'perusahaan_hijau' (UMKM Scrap & Penyedia Teknologi Hijau)
+--    Role 3: 'pemerintah' (Regulator & Auditor MRV)
+-- ==============================================================
+
+-- 1. Tambah kolom role ke tabel companies dengan default 'perusahaan_baja'
+ALTER TABLE public.companies 
+ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'perusahaan_baja';
+
+-- 2. Migrasikan data lama jika ada yang sempat tersimpan sebagai 'umkm_hijau'
+UPDATE public.companies 
+SET role = 'perusahaan_hijau' 
+WHERE role = 'umkm_hijau';
+
+-- 3. Hapus constraint lama (jika ada) dan pasang constraint check yang baru
+ALTER TABLE public.companies 
+DROP CONSTRAINT IF EXISTS companies_role_check;
+
+ALTER TABLE public.companies 
+ADD CONSTRAINT companies_role_check 
+CHECK (role IN ('perusahaan_baja', 'perusahaan_hijau', 'pemerintah'));
+
+-- 4. Perbarui Fungsi Trigger Otomatis saat Pengguna Mendaftar
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.companies (
+    user_id, 
+    name, 
+    siinas_id, 
+    role, 
+    location
+  )
+  VALUES (
+    new.id, 
+    -- Nama Perusahaan / UMKM / Instansi
+    COALESCE(new.raw_user_meta_data->>'company_name', new.raw_user_meta_data->>'full_name', 'Entitas Baru'), 
+    
+    -- Sub-Sektor / Jenis Usaha
+    COALESCE(new.raw_user_meta_data->>'industry_type', 'Umum'),
+    
+    -- Role: 'perusahaan_baja' (default), 'perusahaan_hijau', atau 'pemerintah'
+    COALESCE(new.raw_user_meta_data->>'user_role', 'perusahaan_baja'),
+    
+    'Indonesia'
+  );
+  RETURN new;
+END;
+$$;
+
+-- 5. Pasang Trigger pada auth.users bawaan Supabase
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- 6. Contoh Update Data Pengguna Eksisting (Opsional jika ingin mengubah role manual):
+-- UPDATE public.companies SET role = 'perusahaan_baja' WHERE role IS NULL;
+-- UPDATE public.companies SET role = 'pemerintah' WHERE name ILIKE '%kemenperin%' OR name ILIKE '%pemerintah%';
+-- UPDATE public.companies SET role = 'perusahaan_hijau' WHERE name ILIKE '%koperasi%' OR name ILIKE '%scrap%';
