@@ -21,18 +21,21 @@ class MainContainer extends StatefulWidget {
 
 class _MainContainerState extends State<MainContainer> {
   late int _navIndex;
-
-  final List<Widget> _screens = [
-    const DashboardPage(), // Index 0: Dashboard (Pemerintah / Publik / Makro)
-    const CbamPage(),      // Index 1: CBAM Simulator (Perusahaan Eksportir)
-    const IdriPage(),      // Index 2: IDRI Screen (Audit Pabrik & 4 SDGs)
-    const ProfilePage(),   // Index 3: Profile Screen
-    const MarketPage(),    // Index 4: Green Market (Bursa Scrap UMKM & MRF)
-  ];
+  late List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
+    final bool isGovOrAdmin =
+        widget.userRole.toLowerCase().contains('pemerintah') ||
+        widget.userRole.toLowerCase().contains('admin');
+    _screens = [
+      DashboardPage(initialTabIndex: isGovOrAdmin ? 2 : 0),
+      const CbamPage(),      // Index 1: CBAM Simulator (Perusahaan Eksportir)
+      const IdriPage(),      // Index 2: IDRI Screen (Audit Pabrik & 4 SDGs)
+      const ProfilePage(),   // Index 3: Profile Screen
+      const MarketPage(),    // Index 4: Green Market (Bursa Scrap UMKM & MRF)
+    ];
     _navIndex = widget.initialIndex.clamp(0, _screens.length - 1);
   }
 
