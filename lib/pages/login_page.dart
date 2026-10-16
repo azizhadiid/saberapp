@@ -23,15 +23,6 @@ class _LoginPageState extends State<LoginPage> {
 
   late final StreamSubscription<AuthState> _authSubscription;
 
-  int _getTargetIndexForRole(String role) {
-    if (role == 'perusahaan_baja') {
-      return 2; // IDRI & CBAM
-    } else if (role == 'perusahaan_hijau') {
-      return 4; // Green Marketplace & Scrap UMKM
-    } else {
-      return 0; // Dashboard Nasional & Panel Admin MRV
-    }
-  }
 
   String _getRoleDisplayName(String role) {
     if (role == 'perusahaan_baja') return 'Perusahaan Baja';
@@ -51,6 +42,20 @@ class _LoginPageState extends State<LoginPage> {
     return 'pengawasan@kemenperin.go.id';
   }
 
+  bool _isVerifyingAuth = false;
+
+  String _normalizeRole(String? role) {
+    if (role == null) return 'perusahaan_baja';
+    final r = role.toLowerCase().trim();
+    if (r.contains('hijau') || r.contains('umkm')) return 'perusahaan_hijau';
+    if (r.contains('pemerintah') ||
+        r.contains('admin') ||
+        r.contains('regulator')) {
+      return 'pemerintah';
+    }
+    return 'perusahaan_baja';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -60,7 +65,7 @@ class _LoginPageState extends State<LoginPage> {
       final AuthChangeEvent event = data.event;
       if (event == AuthChangeEvent.signedIn && data.session != null) {
         // Handle external sign-in (e.g., OAuth / Google)
-        _syncAndNavigate(data.session!.user, _selectedRole);
+        _verifyRoleAndNavigate(data.session!.user, _selectedRole);
       }
     });
   }
@@ -73,67 +78,145 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  /// Sinkronisasi Role ke Tabel public.companies dan auth.users secara persisten
-  Future<void> _syncAndNavigate(User user, String chosenRole) async {
-    String finalRole = chosenRole;
+  /// Verifikasi Role Ketat:
+  /// Jika role akun di database BERBEDA dengan tab role yang dipilih saat login,
+  /// maka login DITOLAK, sesi dibatalkan (signOut), dan mental kembali ke halaman login.
+  Future<void> _verifyRoleAndNavigate(User user, String chosenRole) async {
+    if (_isVerifyingAuth) return;
+    _isVerifyingAuth = true;
 
     try {
-      // 1. Cek apakah ada record di tabel public.companies
+      // 1. Cek apakah ada record perusahaan di tabel public.companies
       final companyRes = await Supabase.instance.client
           .from('companies')
           .select('role, name')
           .eq('user_id', user.id)
           .maybeSingle();
 
-      if (companyRes != null) {
-        // Jika pengguna di layar login memilih peran non-default (UMKM / Pemerintah),
-        // atau jika database masih kosong/default, UPDATE ke database
-        if (chosenRole != 'perusahaan_baja' || companyRes['role'] == null) {
-          finalRole = chosenRole;
-          await Supabase.instance.client
-              .from('companies')
-              .update({'role': finalRole})
-              .eq('user_id', user.id);
-        } else {
-          // Gunakan role yang sudah tersimpan di database
-          finalRole = (companyRes['role'] as String?) ?? chosenRole;
+      String? registeredRole;
+      if (companyRes != null && companyRes['role'] != null) {
+        registeredRole = _normalizeRole(companyRes['role'] as String);
+      } else if (user.userMetadata?['user_role'] != null) {
+        registeredRole =
+            _normalizeRole(user.userMetadata!['user_role'] as String);
+      }
+
+      final normalizedChosenRole = _normalizeRole(chosenRole);
+
+      // 2. VALIDASI KETAT: Jika akun sudah terdaftar, peran HARUS COCOK dengan portal yang dipilih
+      if (registeredRole != null) {
+        if (registeredRole != normalizedChosenRole) {
+          // Batalkan sesi login Supabase secara instan agar mental kembali ke Login
+          await Supabase.instance.client.auth.signOut();
+
+          if (mounted) {
+            final registeredName = _getRoleDisplayName(registeredRole);
+            final chosenName = _getRoleDisplayName(normalizedChosenRole);
+
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (ctx) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                icon: const Icon(
+                  Icons.gpp_bad_rounded,
+                  color: Color(0xFFDC2626),
+                  size: 44,
+                ),
+                title: const Text(
+                  'Akses Ditolak!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                content: Text(
+                  'Akun Anda terdaftar sebagai "$registeredName".\n\n'
+                  'Anda tidak diizinkan masuk melalui portal "$chosenName". '
+                  'Silakan beralih ke tab portal "$registeredName" untuk masuk.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF475569),
+                    height: 1.45,
+                  ),
+                ),
+                actionsAlignment: MainAxisAlignment.center,
+                actions: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      // Otomatis arahkan tab ke peran yang benar
+                      setState(() {
+                        _selectedRole = registeredRole!;
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFDC2626),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 10,
+                      ),
+                    ),
+                    child: Text('Beralih ke Portal $registeredName'),
+                  ),
+                ],
+              ),
+            );
+          }
+          return;
         }
       } else {
-        // Jika baris perusahaan belum ada (misal login Google pertama kali), BUAT baris baru
-        finalRole = chosenRole;
+        // Jika akun baru pertama kali (misal Google Login baru), daftarkan ke role yang dipilih
         await Supabase.instance.client.from('companies').upsert({
           'user_id': user.id,
-          'role': finalRole,
-          'name':
-              user.userMetadata?['company_name'] ??
+          'role': normalizedChosenRole,
+          'name': user.userMetadata?['company_name'] ??
               user.userMetadata?['full_name'] ??
               user.email?.split('@').first ??
               'Entitas Terdaftar',
           'siinas_id': user.userMetadata?['industry_type'] ?? 'Umum',
           'location': 'Indonesia',
         }, onConflict: 'user_id');
+
+        await Supabase.instance.client.auth.updateUser(
+          UserAttributes(data: {'user_role': normalizedChosenRole}),
+        );
       }
 
-      // 2. Simpan juga ke user_metadata Supabase agar sinkron dua arah
-      await Supabase.instance.client.auth.updateUser(
-        UserAttributes(data: {'user_role': finalRole}),
+      // 3. Role COCOK & VALID! Lanjut masuk ke layout yang sesuai
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MainContainer(
+            initialIndex: 0,
+            userRole: normalizedChosenRole,
+          ),
+        ),
+        (route) => false,
       );
     } catch (e) {
-      debugPrint('Sync role error (tetap lanjut navigasi): $e');
-      finalRole = chosenRole;
+      debugPrint('Error verifikasi login role: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Terjadi kendala saat verifikasi akses: $e'),
+            backgroundColor: const Color(0xFFDC2626),
+          ),
+        );
+      }
+    } finally {
+      _isVerifyingAuth = false;
     }
-
-    if (!mounted) return;
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MainContainer(
-          initialIndex: _getTargetIndexForRole(finalRole),
-          userRole: _getRoleDisplayName(finalRole),
-        ),
-      ),
-      (route) => false,
-    );
   }
 
   Future<void> _doLogin() async {
@@ -155,7 +238,7 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (res.user != null) {
-        await _syncAndNavigate(res.user!, _selectedRole);
+        await _verifyRoleAndNavigate(res.user!, _selectedRole);
       }
     } on AuthException catch (error) {
       if (!mounted) return;
@@ -203,7 +286,7 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (res.user != null) {
-        await _syncAndNavigate(res.user!, _selectedRole);
+        await _verifyRoleAndNavigate(res.user!, _selectedRole);
       }
     } catch (e) {
       if (!mounted) return;

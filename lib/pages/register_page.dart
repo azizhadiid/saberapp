@@ -25,9 +25,11 @@ class _RegisterPageState extends State<RegisterPage> {
   String _selectedRole = 'perusahaan_baja';
 
   int _getTargetIndexForRole(String role) {
-    if (role == 'perusahaan_baja') return 2; // IDRI & CBAM
-    if (role == 'perusahaan_hijau') return 4; // Green Marketplace & Scrap UMKM
-    return 0; // Dashboard Eksekutif & Admin MRV
+    // Setiap role mendarat di tab Beranda / Utama masing-masing:
+    // - Perusahaan Baja   -> Dashboard Pabrik (0)
+    // - Perusahaan Hijau  -> Katalog Pasokan Scrap (0)
+    // - Pemerintah        -> Dashboard Nasional SIINas (0)
+    return 0;
   }
 
   String _getRoleDisplayName(String role) {
