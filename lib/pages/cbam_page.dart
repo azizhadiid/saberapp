@@ -36,6 +36,10 @@ class _CbamPageState extends State<CbamPage> {
   bool _isWarning = false;
   List<double> _projectedTaxes = [];
 
+  // What-If Simulation Slider Variables (Langkah 2)
+  double _scrapSimPercent = 52.0; // Default 52% sesuai riset EAF Infografis
+  double _ebtSimPercent = 20.0;   // Default 20% bauran EBT/Surya
+
   @override
   void initState() {
     super.initState();
@@ -180,6 +184,472 @@ class _CbamPageState extends State<CbamPage> {
           : 'CCA Amerika Serikat';
       return 'Aman! Intensitas karbon pabrik Anda berada di bawah ambang batas $policy sebesar $_threshold tCO2/t. Anda tidak dikenakan denda pajak ekspor pada tujuan ini.';
     }
+  }
+
+  Widget _buildPresetChip({
+    required String label,
+    required double scrapVal,
+    required double ebtVal,
+    required IconData icon,
+  }) {
+    final bool isSelected =
+        (_scrapSimPercent - scrapVal).abs() < 0.5 &&
+        (_ebtSimPercent - ebtVal).abs() < 0.5;
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _scrapSimPercent = scrapVal;
+          _ebtSimPercent = ebtVal;
+        });
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFF065F46)
+              : const Color(0xFFF3F4F6),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFF10B981)
+                : const Color(0xFFD1D5DB),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 13,
+              color: isSelected ? Colors.white : const Color(0xFF4B5563),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : const Color(0xFF374151),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWhatIfSimulatorCard(NumberFormat currencyFormatter) {
+    // Rumus Reduksi Intensitas Karbon Berbasis Riset (52% Scrap EAF + Bauran EBT/H2-DRI)
+    // Substitusi Scrap di EAF menurunkan emisi langsung IPPU hingga maks 50% (saat 100% scrap)
+    // Transisi EBT & H2-DRI menurunkan emisi energi Scope 2 hingga maks 35% (saat 100% EBT)
+    final double reductionRatio =
+        ((_scrapSimPercent / 100.0) * 0.50) + ((_ebtSimPercent / 100.0) * 0.35);
+    final double simulatedIntensity = max(
+      0.15,
+      _intensity * (1.0 - reductionRatio),
+    );
+    final double intensityDrop = max(0.0, _intensity - simulatedIntensity);
+
+    // Hitung Denda Pajak Sebelum vs Sesudah Intervensi
+    final double baselinePenalty = max(0.0, _intensity - _threshold) *
+        _volume *
+        _taxRateRp;
+    final double simulatedExcess = max(0.0, simulatedIntensity - _threshold);
+    final double simulatedPenalty =
+        simulatedExcess * _volume * _taxRateRp;
+    final double penaltySaved = max(0.0, baselinePenalty - simulatedPenalty);
+    final double savedPercent = baselinePenalty > 0
+        ? (penaltySaved / baselinePenalty) * 100.0
+        : (reductionRatio * 100.0);
+
+    // Hitung potensi insentif kredit karbon jika berada di bawah threshold
+    final double carbonSurplusTon =
+        max(0.0, _threshold - simulatedIntensity) * _volume;
+    // Asumsi harga kredit Bursa Karbon Domestik (IDXCarbon / UU HPP No. 7/2021 Rp 30.000 - Rp 150.000/tCO2e)
+    final double domesticCarbonCreditRp = carbonSurplusTon * 90000;
+    final bool isNowCompliant =
+        simulatedIntensity <= _threshold || _taxRateRp == 0;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFECFDF5), Color(0xFFF0FDFA)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF6EE7B7), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF10B981).withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF059669),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.tune_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'WHAT-IF SIMULATOR PENGHEMATAN DENDA',
+                      style: TextStyle(
+                        color: Color(0xFF065F46),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                    Text(
+                      'Geser slider untuk simulasi transisi EAF (Scrap UMKM) & EBT',
+                      style: TextStyle(
+                        color: Color(0xFF047857),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Preset skenario cepat sesuai Infografis Satria Data
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildPresetChip(
+                label: 'Kondisi Awal (0%)',
+                scrapVal: 0,
+                ebtVal: 0,
+                icon: Icons.restore_outlined,
+              ),
+              _buildPresetChip(
+                label: 'Riset EAF (52% Scrap)',
+                scrapVal: 52,
+                ebtVal: 20,
+                icon: Icons.recycling_outlined,
+              ),
+              _buildPresetChip(
+                label: 'Transisi Agresif (H2-DRI)',
+                scrapVal: 80,
+                ebtVal: 85,
+                icon: Icons.bolt_outlined,
+              ),
+            ],
+          ),
+          const Divider(height: 24, color: Color(0xFFA7F3D0)),
+
+          // SLIDER 1: Substitusi Scrap Baja (EAF & MRF UMKM)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Expanded(
+                child: Text(
+                  '1. Substitusi Scrap Baja (Rute EAF & MRF UMKM)',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF059669),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${_scrapSimPercent.toStringAsFixed(0)}%',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: const Color(0xFF059669),
+              inactiveTrackColor: const Color(0xFFD1FAE5),
+              thumbColor: const Color(0xFF047857),
+              overlayColor: const Color(0xFF10B981).withValues(alpha: 0.15),
+            ),
+            child: Slider(
+              value: _scrapSimPercent,
+              min: 0,
+              max: 100,
+              divisions: 100,
+              label: '${_scrapSimPercent.toStringAsFixed(0)}% Scrap',
+              onChanged: (val) {
+                setState(() => _scrapSimPercent = val);
+              },
+            ),
+          ),
+          const Text(
+            '*Sesuai kajian tim: 52% bauran High-Grade Scrap UMKM pada EAF memangkas emisi IPPU secara signifikan.',
+            style: TextStyle(
+              fontSize: 10,
+              fontStyle: FontStyle.italic,
+              color: Color(0xFF065F46),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // SLIDER 2: Bauran Energi Terbarukan (EBT / Green Hydrogen)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Expanded(
+                child: Text(
+                  '2. Bauran Energi Bersih (Listrik EBT / H2-DRI)',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0284C7),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${_ebtSimPercent.toStringAsFixed(0)}%',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: const Color(0xFF0284C7),
+              inactiveTrackColor: const Color(0xFFE0F2FE),
+              thumbColor: const Color(0xFF0369A1),
+              overlayColor: const Color(0xFF0284C7).withValues(alpha: 0.15),
+            ),
+            child: Slider(
+              value: _ebtSimPercent,
+              min: 0,
+              max: 100,
+              divisions: 100,
+              label: '${_ebtSimPercent.toStringAsFixed(0)}% EBT',
+              onChanged: (val) {
+                setState(() => _ebtSimPercent = val);
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Kotak Hasil Komparasi Before vs After
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFA7F3D0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'INTENSITAS AWAL',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Color(0xFF6B7280),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${_intensity.toStringAsFixed(2)} tCO2/t',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFDC2626),
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Color(0xFF059669),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Text(
+                            'INTENSITAS SIMULASI',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Color(0xFF065F46),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${simulatedIntensity.toStringAsFixed(2)} tCO2/t',
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF059669),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 20),
+                Text(
+                  baselinePenalty > 0
+                      ? 'DENDA CBAM YANG BERHASIL DIHEMAT:'
+                      : 'ESTIMASI REDUKSI EMISI & NILAI BURSA KARBON:',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF047857),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  baselinePenalty > 0
+                      ? currencyFormatter.format(penaltySaved)
+                      : currencyFormatter.format(domesticCarbonCreditRp),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF059669),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  baselinePenalty > 0
+                      ? 'Hemat ${savedPercent.toStringAsFixed(1)}% (Sisa Denda: ${currencyFormatter.format(simulatedPenalty)})'
+                      : 'Penurunan intensitas -${intensityDrop.toStringAsFixed(2)} tCO2/t (Surplus kredit IDXCarbon: ${carbonSurplusTon.toStringAsFixed(0)} ton CO2e)',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Color(0xFF374151),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isNowCompliant
+                        ? const Color(0xFFECFDF5)
+                        : const Color(0xFFFFFBEB),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        isNowCompliant
+                            ? Icons.verified_rounded
+                            : Icons.info_outline_rounded,
+                        size: 16,
+                        color: isNowCompliant
+                            ? const Color(0xFF059669)
+                            : const Color(0xFFD97706),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          isNowCompliant
+                              ? 'Status: LOLOS AMBANG BATAS ($_threshold tCO2/t)! Dana penghematan denda dapat dialihkan untuk belanja scrap UMKM lokal & program Green Reskilling buruh.'
+                              : 'Status: Denda turun drastis, namun masih perlu tambahan bauran Scrap EAF atau EBT agar turun di bawah $_threshold tCO2/t.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            height: 1.35,
+                            color: isNowCompliant
+                                ? const Color(0xFF065F46)
+                                : const Color(0xFF92400E),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _intCtrl.text = simulatedIntensity.toStringAsFixed(2);
+                      });
+                      _calculate();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Intensitas baru (${simulatedIntensity.toStringAsFixed(2)} tCO2/t) diterapkan ke kalkulator utama!',
+                          ),
+                          backgroundColor: const Color(0xFF059669),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.check_circle_outline, size: 16),
+                    label: const Text(
+                      'Terapkan Intensitas Simulasi ke Kalkulasi Utama',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF065F46),
+                      side: const BorderSide(color: Color(0xFF059669)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -704,6 +1174,13 @@ class _CbamPageState extends State<CbamPage> {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+
+              // ============================================================
+              // LANGKAH 2: SLIDER WHAT-IF SIMULASI PENGHEMATAN DENDA CBAM
+              // ============================================================
+              _buildWhatIfSimulatorCard(currencyFormatter),
+
               const SizedBox(height: 24),
               const Text(
                 'TINDAKAN CEPAT',
