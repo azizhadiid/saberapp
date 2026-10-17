@@ -410,7 +410,7 @@ class _CbamPageState extends State<CbamPage> {
             ),
           ),
           const Text(
-            '*Sesuai kajian tim: 52% bauran High-Grade Scrap UMKM pada EAF memangkas emisi IPPU secara signifikan.',
+            '*Standar Teknis: Optimalisasi bauran High-Grade Scrap pada rute Electric Arc Furnace (EAF) mereduksi emisi proses (IPPU) secara terukur.',
             style: TextStyle(
               fontSize: 10,
               fontStyle: FontStyle.italic,
@@ -612,35 +612,57 @@ class _CbamPageState extends State<CbamPage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        _intCtrl.text = simulatedIntensity.toStringAsFixed(2);
-                      });
-                      _calculate();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Intensitas baru (${simulatedIntensity.toStringAsFixed(2)} tCO2/t) diterapkan ke kalkulator utama!',
+                const SizedBox(height: 14),
+                Padding(
+                  padding: const EdgeInsets.only(top: 2, bottom: 4),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _intCtrl.text = simulatedIntensity.toStringAsFixed(2);
+                        });
+                        _calculate();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Intensitas simulasi (${simulatedIntensity.toStringAsFixed(2)} tCO2/t) diterapkan ke kalkulasi utama!',
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            backgroundColor: const Color(0xFF047857),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
-                          backgroundColor: const Color(0xFF059669),
+                        );
+                      },
+                      icon: const Icon(Icons.tune_rounded, size: 18),
+                      label: const Text(
+                        'Terapkan Intensitas Simulasi ke Kalkulasi Utama',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.2,
                         ),
-                      );
-                    },
-                    icon: const Icon(Icons.check_circle_outline, size: 16),
-                    label: const Text(
-                      'Terapkan Intensitas Simulasi ke Kalkulasi Utama',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF065F46),
-                      side: const BorderSide(color: Color(0xFF059669)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF047857),
+                        foregroundColor: Colors.white,
+                        elevation: 2,
+                        shadowColor: const Color(0xFF047857).withValues(alpha: 0.35),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                     ),
                   ),
                 ),
