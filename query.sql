@@ -568,4 +568,102 @@ WHERE carbon_intensity > 0 AND carbon_intensity <= 0.80;
 
 UPDATE public.companies 
 SET mrv_status = 'perlu_tindakan' 
-WHERE carbon_intensity > 1.40;
+WHERE carbon_intensity > 1.40;
+
+
+
+-- ============================================================================
+-- SKRIP SQL SUPABASE: TABEL COMPANIES, RLS PEMERINTAH & STORAGE
+-- Jalankan di: Supabase Dashboard -> SQL Editor -> Run
+-- ============================================================================
+
+-- 1. Tambahkan kolom pendukung di tabel companies jika belum ada
+ALTER TABLE public.companies 
+ADD COLUMN IF NOT EXISTS role text DEFAULT 'perusahaan_baja',
+ADD COLUMN IF NOT EXISTS mrv_status text DEFAULT 'menunggu_verifikasi',
+ADD COLUMN IF NOT EXISTS avatar_url text,
+ADD COLUMN IF NOT EXISTS agency_name text,
+ADD COLUMN IF NOT EXISTS nip text,
+ADD COLUMN IF NOT EXISTS position text,
+ADD COLUMN IF NOT EXISTS phone text;
+
+-- 2. Aktifkan Row Level Security (RLS)
+ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
+
+-- 3. Hapus policy lama agar tidak bentrok
+DROP POLICY IF EXISTS "Companies viewable by authenticated users" ON public.companies;
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.companies;
+DROP POLICY IF EXISTS "Users update own or Pemerintah updates all" ON public.companies;
+DROP POLICY IF EXISTS "Public access to profile images" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can upload profile images" ON storage.objects;
+DROP POLICY IF EXISTS "Users can update and delete profile images" ON storage.objects;
+
+-- 4. Policy SELECT: Semua pengguna terautentikasi dapat membaca data entitas & profil
+CREATE POLICY "Companies viewable by authenticated users" 
+ON public.companies 
+FOR SELECT 
+TO authenticated 
+USING (true);
+
+-- 5. Policy INSERT: Pengguna dapat menambahkan data profilnya sendiri
+CREATE POLICY "Users can insert their own profile" 
+ON public.companies 
+FOR INSERT 
+TO authenticated 
+WITH CHECK (auth.uid() = user_id OR user_id IS NULL);
+
+-- 6. Policy UPDATE KRUSIAL:
+-- Pemilik akun dapat mengubah profilnya sendiri (auth.uid() = user_id)
+-- DAN Akun ber-role 'pemerintah' DAPAT MENGUBAH SEMUA baris perusahaan baja (verifikasi MRV)!
+CREATE POLICY "Users update own or Pemerintah updates all" 
+ON public.companies 
+FOR UPDATE 
+TO authenticated 
+USING (
+  auth.uid() = user_id 
+  OR 
+  EXISTS (
+    SELECT 1 FROM public.companies AS c 
+    WHERE c.user_id = auth.uid() 
+      AND (c.role ILIKE '%pemerintah%' OR c.role ILIKE '%regulator%' OR c.role ILIKE '%admin%')
+  )
+)
+WITH CHECK (
+  auth.uid() = user_id 
+  OR 
+  EXISTS (
+    SELECT 1 FROM public.companies AS c 
+    WHERE c.user_id = auth.uid() 
+      AND (c.role ILIKE '%pemerintah%' OR c.role ILIKE '%regulator%' OR c.role ILIKE '%admin%')
+  )
+);
+
+-- ============================================================================
+-- 7. SETUP BUCKET STORAGE & RLS UNTUK FOTO PROFIL
+-- ============================================================================
+
+-- Buat bucket 'profile_perushaan' & 'avatars' serta atur menjadi publik
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('profile_perushaan', 'profile_perushaan', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('avatars', 'avatars', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Policy Storage: Siapapun yang terautentikasi dapat membaca foto profil
+CREATE POLICY "Public access to profile images"
+ON storage.objects FOR SELECT
+USING (bucket_id IN ('profile_perushaan', 'avatars'));
+
+-- Policy Storage: User login dapat mengunggah foto profil
+CREATE POLICY "Authenticated users can upload profile images"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (bucket_id IN ('profile_perushaan', 'avatars'));
+
+-- Policy Storage: User login dapat memperbarui / mengganti foto profil
+CREATE POLICY "Users can update and delete profile images"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (bucket_id IN ('profile_perushaan', 'avatars'));

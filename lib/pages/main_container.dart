@@ -9,6 +9,7 @@ import 'profile_page.dart';
 import 'views/pemerintahan/gov_national_siinas_view.dart';
 import 'views/pemerintahan/gov_spatial_map_view.dart';
 import 'views/pemerintahan/gov_policy_brief_view.dart';
+import 'views/pemerintahan/gov_profile_inspector_view.dart';
 
 import 'views/umkm/umkm_katalog_view.dart';
 import 'views/umkm/umkm_demand_view.dart';
@@ -71,7 +72,7 @@ class _MainContainerState extends State<MainContainer> {
         const GovNationalSiinasView(),                      // 0: SIINas Nasional & MRV Live
         const GovSpatialMapView(),                          // 1: Peta Spasial Hotspot
         const GovPolicyBriefView(),                         // 2: Policy Brief & SDGs
-        const ProfilePage(),                                // 3: Profil Pengawas
+        const GovProfileInspectorView(),                    // 3: Profil Pengawas & Otoritas MRV
       ];
     } else {
       // 3. Ekosistem Perusahaan Baja (Tetap, Jangan Diganggu Gugat!)
@@ -329,7 +330,7 @@ class _MainContainerState extends State<MainContainer> {
                       ),
                       _buildNavItem(
                         icon: Icons.admin_panel_settings_outlined,
-                        label: 'Pengawas',
+                        label: 'Pemerintah',
                         index: 3,
                         activeColor: primaryGov,
                       ),
