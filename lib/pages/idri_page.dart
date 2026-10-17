@@ -446,56 +446,138 @@ Kembalikan format JSON murni:
             ),
             const SizedBox(height: 24),
 
-            // Section 2: Teknologi Eksisting
-            const Text(
-              'TEKNOLOGI EKSISTING',
-              style: TextStyle(
-                color: Color(0xFF4B5563),
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1,
+            // Section 2: Teknologi Eksisting (UI Rapi & Terstruktur)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _techs.map((tech) {
-                bool isSelected = _selectedTech == tech;
-                return GestureDetector(
-                  onTap: () => setState(() {
-                    _selectedTech = tech;
-                    _showResult = false;
-                  }),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 9,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? const Color(0xFF111827)
-                          : const Color(0xFFEEF2FF),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isSelected
-                            ? const Color(0xFF111827)
-                            : const Color(0xFFE0E7FF),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEEF2FF),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.precision_manufacturing_rounded,
+                              color: Color(0xFF4F46E5),
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'TEKNOLOGI EKSISTING',
+                            style: TextStyle(
+                              color: Color(0xFF1E293B),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ],
                       ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Fasilitas Tungku',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Pilih teknologi fasilitas produksi/tungku utama yang saat ini beroperasi di pabrik:',
+                    style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B), height: 1.35),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
                     ),
-                    child: Text(
-                      tech,
-                      style: TextStyle(
-                        color: isSelected
-                            ? Colors.white
-                            : const Color(0xFF4B5563),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedTech,
+                        isExpanded: true,
+                        icon: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: Color(0xFF4F46E5),
+                          size: 22,
+                        ),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF0F172A),
+                        ),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() {
+                              _selectedTech = val;
+                              _showResult = false;
+                            });
+                          }
+                        },
+                        items: _techs.map<DropdownMenuItem<String>>((String tech) {
+                          return DropdownMenuItem<String>(
+                            value: tech,
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.bolt_rounded,
+                                  size: 15,
+                                  color: Color(0xFF6366F1),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    tech,
+                                    style: const TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1E293B),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ),
                   ),
-                );
-              }).toList(),
+                  const SizedBox(height: 10),
+                  _buildTechSummaryBadge(_selectedTech),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
 
@@ -1088,6 +1170,59 @@ Kembalikan format JSON murni:
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildTechSummaryBadge(String tech) {
+    String desc = 'Rute peleburan besi-baja konvensional';
+    Color tagColor = const Color(0xFFD97706);
+    Color tagBg = const Color(0xFFFFFBEB);
+
+    if (tech.contains('Blast Furnace')) {
+      desc = 'Batu Bara Kokas dominan • Intensitas ~1.8-2.2 tCO2/t';
+      tagColor = const Color(0xFFDC2626);
+      tagBg = const Color(0xFFFEF2F2);
+    } else if (tech.contains('Induction Furnace')) {
+      desc = 'Peleburan induksi listrik • Rentan inefisiensi termal & debu PM2.5';
+      tagColor = const Color(0xFFEA580C);
+      tagBg = const Color(0xFFFFF7ED);
+    } else if (tech.contains('Electric Arc Furnace')) {
+      desc = 'Rute sirkular berbasis scrap baja • Potensi dekarbonisasi tinggi (<0.80 tCO2/t)';
+      tagColor = const Color(0xFF059669);
+      tagBg = const Color(0xFFECFDF5);
+    } else if (tech.contains('Direct Reduced Iron')) {
+      desc = 'Reduksi langsung gas alam / hidrogen • Transisi hijau masa depan';
+      tagColor = const Color(0xFF0284C7);
+      tagBg = const Color(0xFFF0F9FF);
+    } else if (tech.contains('Submerged Arc')) {
+      desc = 'Peleburan ferroalloy & paduan khusus • Kebutuhan daya listrik tinggi';
+      tagColor = const Color(0xFF7C3AED);
+      tagBg = const Color(0xFFF5F3FF);
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: tagBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: tagColor.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline_rounded, size: 14, color: tagColor),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              desc,
+              style: TextStyle(
+                fontSize: 11,
+                color: tagColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
