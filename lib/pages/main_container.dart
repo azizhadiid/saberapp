@@ -9,7 +9,6 @@ import 'profile_page.dart';
 import 'views/pemerintahan/gov_national_siinas_view.dart';
 import 'views/pemerintahan/gov_spatial_map_view.dart';
 import 'views/pemerintahan/gov_policy_brief_view.dart';
-import 'views/pemerintahan/gov_mrv_audit_view.dart';
 
 import 'views/umkm/umkm_katalog_view.dart';
 import 'views/umkm/umkm_demand_view.dart';
@@ -73,7 +72,6 @@ class _MainContainerState extends State<MainContainer> {
         const GovSpatialMapView(),                          // 1: Peta Spasial Hotspot
         const GovPolicyBriefView(),                         // 2: Policy Brief & SDGs
         const ProfilePage(),                                // 3: Profil Pengawas
-        const GovMrvAuditView(),                            // 4: Panel Validasi MRV
       ];
     } else {
       // 3. Ekosistem Perusahaan Baja (Tetap, Jangan Diganggu Gugat!)
@@ -289,78 +287,54 @@ class _MainContainerState extends State<MainContainer> {
 
     return Scaffold(
       body: _screens[_navIndex],
-      floatingActionButton: isKeyboardVisible
-          ? null
-          : Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FloatingActionButton(
-                  onPressed: () => setState(() => _navIndex = 4),
-                  backgroundColor: _navIndex == 4
-                      ? const Color(0xFF4F46E5)
-                      : const Color(0xFF312E81),
-                  shape: const CircleBorder(),
-                  elevation: 4,
-                  child: const Icon(
-                    Icons.fact_check,
-                    color: Colors.white,
-                    size: 26,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Audit MRV',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: _navIndex == 4
-                        ? const Color(0xFF4338CA)
-                        : const Color(0xFF6B7280),
-                    fontWeight: _navIndex == 4
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                ),
-              ],
-            ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: isKeyboardVisible
           ? null
-          : BottomAppBar(
-              color: Colors.white,
-              shape: const CircularNotchedRectangle(),
-              notchMargin: 8.0,
-              child: SizedBox(
-                height: 60,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildNavItem(
-                      icon: Icons.account_balance_outlined,
-                      label: 'Nasional',
-                      index: 0,
-                      activeColor: primaryGov,
-                    ),
-                    _buildNavItem(
-                      icon: Icons.location_on_outlined,
-                      label: 'Sebaran',
-                      index: 1,
-                      activeColor: primaryGov,
-                    ),
-                    const SizedBox(width: 40),
-                    _buildNavItem(
-                      icon: Icons.menu_book_outlined,
-                      label: 'Policy Brief',
-                      index: 2,
-                      activeColor: primaryGov,
-                    ),
-                    _buildNavItem(
-                      icon: Icons.admin_panel_settings_outlined,
-                      label: 'Pengawas',
-                      index: 3,
-                      activeColor: primaryGov,
-                    ),
-                  ],
+          : Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: const Border(
+                  top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                child: SizedBox(
+                  height: 60,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildNavItem(
+                        icon: Icons.account_balance_outlined,
+                        label: 'Nasional',
+                        index: 0,
+                        activeColor: primaryGov,
+                      ),
+                      _buildNavItem(
+                        icon: Icons.location_on_outlined,
+                        label: 'Sebaran',
+                        index: 1,
+                        activeColor: primaryGov,
+                      ),
+                      _buildNavItem(
+                        icon: Icons.menu_book_outlined,
+                        label: 'Policy Brief',
+                        index: 2,
+                        activeColor: primaryGov,
+                      ),
+                      _buildNavItem(
+                        icon: Icons.admin_panel_settings_outlined,
+                        label: 'Pengawas',
+                        index: 3,
+                        activeColor: primaryGov,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
