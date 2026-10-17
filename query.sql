@@ -513,3 +513,59 @@ CREATE TRIGGER on_auth_user_created
 -- UPDATE public.companies SET role = 'perusahaan_baja' WHERE role IS NULL;
 -- UPDATE public.companies SET role = 'pemerintah' WHERE name ILIKE '%kemenperin%' OR name ILIKE '%pemerintah%';
 -- UPDATE public.companies SET role = 'perusahaan_hijau' WHERE name ILIKE '%koperasi%' OR name ILIKE '%scrap%';
+
+
+-- ==============================================================
+-- 8. PEMBARUAN STATUS MRV & IZIN RLS UPDATE LENGKAP (PEMERINTAH & INDUSTRI)
+-- ==============================================================
+
+-- 1. Tambah kolom mrv_status ke tabel companies (default: 'menunggu')
+ALTER TABLE public.companies 
+ADD COLUMN IF NOT EXISTS mrv_status TEXT DEFAULT 'menunggu';
+
+-- 2. Pasang Constraint Check agar nilai status MRV selalu valid
+DO $$ 
+BEGIN 
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'companies_mrv_check'
+  ) THEN 
+    ALTER TABLE public.companies 
+    ADD CONSTRAINT companies_mrv_check 
+    CHECK (mrv_status IN ('disetujui', 'menunggu', 'perlu_tindakan'));
+  END IF; 
+END $$;
+
+-- 3. Hapus policy-policy lama yang membatasi hak akses
+DROP POLICY IF EXISTS "Users can manage their own company" ON public.companies;
+DROP POLICY IF EXISTS "Allow authenticated read on companies" ON public.companies;
+DROP POLICY IF EXISTS "Allow authenticated update on companies" ON public.companies;
+DROP POLICY IF EXISTS "Allow authenticated insert on companies" ON public.companies;
+
+-- 4. Kebijakan Keamanan (RLS) Baru yang Dinamis:
+-- A. Izin BACA (SELECT): Semua akun login (Pemerintah/Pabrik/UMKM) bisa membaca data perusahaan
+CREATE POLICY "Allow authenticated read on companies" 
+  ON public.companies FOR SELECT 
+  TO authenticated 
+  USING (true);
+
+-- B. Izin UPDATE: Mengizinkan Pemerintah mengubah status MRV dan user mengubah data pabrik
+CREATE POLICY "Allow authenticated update on companies" 
+  ON public.companies FOR UPDATE 
+  TO authenticated 
+  USING (true)
+  WITH CHECK (true);
+
+-- C. Izin INSERT: Mengizinkan pendaftaran akun dan entitas pabrik baru
+CREATE POLICY "Allow authenticated insert on companies" 
+  ON public.companies FOR INSERT 
+  TO authenticated 
+  WITH CHECK (true);
+
+-- 5. Inisialisasi status MRV awal berdasarkan intensitas karbon
+UPDATE public.companies 
+SET mrv_status = 'disetujui' 
+WHERE carbon_intensity > 0 AND carbon_intensity <= 0.80;
+
+UPDATE public.companies 
+SET mrv_status = 'perlu_tindakan' 
+WHERE carbon_intensity > 1.40;

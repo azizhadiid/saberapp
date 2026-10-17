@@ -4,8 +4,17 @@ import 'cbam_page.dart';
 import 'market_page.dart';
 import 'idri_page.dart';
 import 'profile_page.dart';
-import 'views/green_company_views.dart';
-import 'views/gov_views.dart';
+
+// Import Views Modular Berdasarkan Folder
+import 'views/pemerintahan/gov_national_siinas_view.dart';
+import 'views/pemerintahan/gov_spatial_map_view.dart';
+import 'views/pemerintahan/gov_policy_brief_view.dart';
+import 'views/pemerintahan/gov_mrv_audit_view.dart';
+
+import 'views/umkm/umkm_katalog_view.dart';
+import 'views/umkm/umkm_demand_view.dart';
+import 'views/umkm/umkm_partnership_view.dart';
+import 'views/umkm/umkm_add_supply_dialog.dart';
 
 class MainContainer extends StatefulWidget {
   final int initialIndex;
@@ -39,7 +48,7 @@ class _MainContainerState extends State<MainContainer> {
   void _openAddSupplyDialog() {
     showDialog(
       context: context,
-      builder: (context) => const GreenAddSupplyDialog(),
+      builder: (context) => const UmkmAddSupplyDialog(),
     );
   }
 
@@ -51,20 +60,20 @@ class _MainContainerState extends State<MainContainer> {
     if (role == 'perusahaan_hijau') {
       // 1. Ekosistem Perusahaan Hijau (UMKM Scrap & Green Tech)
       _screens = [
-        GreenKatalogView(onAddSupply: _openAddSupplyDialog), // 0: Katalog Pasokan
-        const GreenDemandView(),                             // 1: Permintaan Pabrik
-        const GreenPartnershipView(),                        // 2: Kemitraan & Standar
-        const ProfilePage(),                                 // 3: Profil UMKM
-        const MarketPage(),                                  // 4: Green Market Hub
+        UmkmKatalogView(onAddSupply: _openAddSupplyDialog), // 0: Katalog Pasokan
+        const UmkmDemandView(),                             // 1: Permintaan Pabrik
+        const UmkmPartnershipView(),                        // 2: Kemitraan & Standar
+        const ProfilePage(),                                // 3: Profil UMKM
+        const MarketPage(),                                 // 4: Green Market Hub
       ];
     } else if (role == 'pemerintah') {
       // 2. Ekosistem Pemerintah (Regulator & Auditor MRV)
       _screens = [
-        const DashboardPage(initialTabIndex: 1),             // 0: Dashboard Nasional SIINas
-        const GovSpatialMapView(),                           // 1: Peta Spasial Hotspot
-        const GovPolicyBriefView(),                          // 2: Policy Brief & SDGs
-        const ProfilePage(),                                 // 3: Profil Pengawas
-        const GovMrvAuditView(),                             // 4: Panel Validasi MRV
+        const GovNationalSiinasView(),                      // 0: SIINas Nasional & MRV Live
+        const GovSpatialMapView(),                          // 1: Peta Spasial Hotspot
+        const GovPolicyBriefView(),                         // 2: Policy Brief & SDGs
+        const ProfilePage(),                                // 3: Profil Pengawas
+        const GovMrvAuditView(),                            // 4: Panel Validasi MRV
       ];
     } else {
       // 3. Ekosistem Perusahaan Baja (Tetap, Jangan Diganggu Gugat!)
@@ -276,7 +285,7 @@ class _MainContainerState extends State<MainContainer> {
   /// 3. LAYOUT PEMERINTAH (REGULATOR & AUDITOR MRV)
   /// ==========================================================================
   Widget _buildGovernmentScaffold(bool isKeyboardVisible) {
-    const primaryGov = Color(0xFF4338CA); // Deep Indigo
+    const primaryGov = Color(0xFF4338CA); // Deep Indigo / Royal Purple
 
     return Scaffold(
       body: _screens[_navIndex],
@@ -327,7 +336,7 @@ class _MainContainerState extends State<MainContainer> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _buildNavItem(
-                      icon: Icons.analytics_outlined,
+                      icon: Icons.account_balance_outlined,
                       label: 'Nasional',
                       index: 0,
                       activeColor: primaryGov,
