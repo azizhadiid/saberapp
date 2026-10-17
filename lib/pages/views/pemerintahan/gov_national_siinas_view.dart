@@ -551,6 +551,7 @@ class _GovNationalSiinasViewState extends State<GovNationalSiinasView> {
                         },
                         selectedColor: primaryPurple,
                         backgroundColor: Colors.white,
+                        checkmarkColor: Colors.white,
                         labelStyle: TextStyle(
                           color: isSelected ? Colors.white : const Color(0xFF475569),
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,

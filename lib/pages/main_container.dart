@@ -342,8 +342,8 @@ class _MainContainerState extends State<MainContainer> {
                       activeColor: primaryGov,
                     ),
                     _buildNavItem(
-                      icon: Icons.map_outlined,
-                      label: 'Peta Emisi',
+                      icon: Icons.location_on_outlined,
+                      label: 'Sebaran',
                       index: 1,
                       activeColor: primaryGov,
                     ),
