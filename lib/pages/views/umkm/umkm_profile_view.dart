@@ -125,12 +125,14 @@ class _UmkmProfileViewState extends State<UmkmProfileView> {
         // Status Verifikasi & Seleksi Pemerintah
         final rawIsVerified = res['is_verified'];
         final rawVerStatus = (res['verification_status'] ?? '').toString().trim().toLowerCase();
-        if (rawIsVerified == true || rawVerStatus == 'terverifikasi') {
+        final rawUmkmVer = (res['umkm_verification'] ?? '').toString().trim().toLowerCase();
+
+        if (rawIsVerified == true || rawVerStatus == 'terverifikasi' || rawUmkmVer == 'terverifikasi' || rawUmkmVer == 'disetujui') {
           _isVerified = true;
           _verificationStatus = 'terverifikasi';
-        } else if (rawVerStatus == 'perlu_perbaikan' || rawVerStatus == 'ditolak') {
+        } else if (rawVerStatus == 'perlu_perbaikan' || rawVerStatus == 'ditolak' || rawUmkmVer == 'perlu_perbaikan' || rawUmkmVer == 'ditolak') {
           _isVerified = false;
-          _verificationStatus = rawVerStatus;
+          _verificationStatus = rawVerStatus.isNotEmpty ? rawVerStatus : rawUmkmVer;
         } else {
           _isVerified = false;
           _verificationStatus = 'menunggu_verifikasi';
