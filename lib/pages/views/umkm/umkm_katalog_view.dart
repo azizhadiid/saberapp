@@ -170,10 +170,10 @@ class _UmkmKatalogViewState extends State<UmkmKatalogView> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE0F2FE),
+                      color: const Color(0xFFECFDF5),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.trending_up_rounded, color: Color(0xFF0284C7), size: 22),
+                    child: const Icon(Icons.trending_up_rounded, color: Color(0xFF059669), size: 22),
                   ),
                   const SizedBox(width: 12),
                   const Expanded(
@@ -211,7 +211,7 @@ class _UmkmKatalogViewState extends State<UmkmKatalogView> {
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(ctx),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0284C7),
+                    backgroundColor: const Color(0xFF059669),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
@@ -270,10 +270,10 @@ class _UmkmKatalogViewState extends State<UmkmKatalogView> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE0F2FE),
+                      color: const Color(0xFFECFDF5),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.edit_note_rounded, color: Color(0xFF0284C7), size: 22),
+                    child: const Icon(Icons.edit_note_rounded, color: Color(0xFF059669), size: 22),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -436,13 +436,13 @@ class _UmkmKatalogViewState extends State<UmkmKatalogView> {
                             messenger.showSnackBar(
                               const SnackBar(
                                 content: Text('Data stok pasokan berhasil diperbarui!'),
-                                backgroundColor: Color(0xFF0284C7),
+                                backgroundColor: Color(0xFF059669),
                               ),
                             );
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0284C7),
+                          backgroundColor: const Color(0xFF059669),
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
@@ -518,7 +518,7 @@ class _UmkmKatalogViewState extends State<UmkmKatalogView> {
                 (mill) => ListTile(
                   dense: true,
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.factory_rounded, color: Color(0xFF0284C7), size: 20),
+                  leading: const Icon(Icons.factory_rounded, color: Color(0xFF059669), size: 20),
                   title: Text(mill, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
                   trailing: ElevatedButton(
                     onPressed: () {
@@ -637,7 +637,7 @@ class _UmkmKatalogViewState extends State<UmkmKatalogView> {
                     height: 18,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0284C7)),
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF059669)),
                     ),
                   )
                 : const Icon(Icons.refresh_rounded, color: Color(0xFF475569), size: 22),
@@ -656,12 +656,12 @@ class _UmkmKatalogViewState extends State<UmkmKatalogView> {
           Padding(
             padding: const EdgeInsets.only(right: 14.0, left: 4.0),
             child: InkWell(
-              onTap: _openAddNewSupply,
+               onTap: _openAddNewSupply,
               borderRadius: BorderRadius.circular(8),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6.5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0284C7),
+                  color: const Color(0xFF059669),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Row(
@@ -686,7 +686,7 @@ class _UmkmKatalogViewState extends State<UmkmKatalogView> {
       ),
       body: RefreshIndicator(
         onRefresh: _fetchSupplies,
-        color: const Color(0xFF0284C7),
+        color: const Color(0xFF059669),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
@@ -701,14 +701,14 @@ class _UmkmKatalogViewState extends State<UmkmKatalogView> {
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF0284C7), Color(0xFF0369A1)],
+                    colors: [Color(0xFF059669), Color(0xFF047857)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF0284C7).withValues(alpha: 0.25),
+                      color: const Color(0xFF059669).withValues(alpha: 0.25),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -940,7 +940,7 @@ class _UmkmKatalogViewState extends State<UmkmKatalogView> {
                         onSelected: (val) {
                           setState(() => _selectedCategory = cat);
                         },
-                        selectedColor: const Color(0xFF0284C7),
+                        selectedColor: const Color(0xFF059669),
                         backgroundColor: Colors.white,
                         labelStyle: TextStyle(
                           color: isSelected ? Colors.white : const Color(0xFF475569),
@@ -950,7 +950,7 @@ class _UmkmKatalogViewState extends State<UmkmKatalogView> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                           side: BorderSide(
-                            color: isSelected ? const Color(0xFF0284C7) : const Color(0xFFE2E8F0),
+                            color: isSelected ? const Color(0xFF059669) : const Color(0xFFE2E8F0),
                           ),
                         ),
                       ),
@@ -983,10 +983,10 @@ class _UmkmKatalogViewState extends State<UmkmKatalogView> {
                   const SizedBox(width: 8),
                   TextButton.icon(
                     onPressed: _openAddNewSupply,
-                    icon: const Icon(Icons.add_rounded, size: 16, color: Color(0xFF0284C7)),
+                    icon: const Icon(Icons.add_rounded, size: 16, color: Color(0xFF059669)),
                     label: const Text(
                       'Tambah Pasokan',
-                      style: TextStyle(color: Color(0xFF0284C7), fontSize: 12, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: Color(0xFF059669), fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -1019,7 +1019,7 @@ class _UmkmKatalogViewState extends State<UmkmKatalogView> {
                       ElevatedButton.icon(
                         onPressed: _openAddNewSupply,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0284C7),
+                          backgroundColor: const Color(0xFF059669),
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
@@ -1216,7 +1216,7 @@ class _UmkmKatalogViewState extends State<UmkmKatalogView> {
                                         style: const TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
-                                          color: Color(0xFF0284C7),
+                                          color: Color(0xFF059669),
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -1304,7 +1304,7 @@ class _UmkmKatalogViewState extends State<UmkmKatalogView> {
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFF0284C7),
+                                        color: const Color(0xFF059669),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: const Row(

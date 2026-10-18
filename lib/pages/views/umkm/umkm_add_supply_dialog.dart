@@ -84,7 +84,7 @@ class _UmkmAddSupplyDialogState extends State<UmkmAddSupplyDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Pasokan berhasil disimpan dan diposting ke Bursa Pabrik Baja!'),
-            backgroundColor: Color(0xFF0284C7),
+            backgroundColor: Color(0xFF059669),
           ),
         );
       }
@@ -95,7 +95,7 @@ class _UmkmAddSupplyDialogState extends State<UmkmAddSupplyDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Pasokan berhasil ditambahkan ke katalog pasokan Anda!'),
-            backgroundColor: Color(0xFF0284C7),
+            backgroundColor: Color(0xFF059669),
           ),
         );
       }
@@ -120,12 +120,12 @@ class _UmkmAddSupplyDialogState extends State<UmkmAddSupplyDialog> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE0F2FE),
+                      color: const Color(0xFFECFDF5),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
                       Icons.add_business,
-                      color: Color(0xFF0284C7),
+                      color: Color(0xFF059669),
                       size: 22,
                     ),
                   ),
@@ -261,7 +261,7 @@ class _UmkmAddSupplyDialogState extends State<UmkmAddSupplyDialog> {
                   ElevatedButton(
                     onPressed: _isSubmitting ? null : _submitSupply,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0284C7),
+                      backgroundColor: const Color(0xFF059669),
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

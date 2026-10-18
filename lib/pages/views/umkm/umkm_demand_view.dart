@@ -104,12 +104,12 @@ class UmkmDemandView extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                        color: const Color(0xFFECFDF5),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
                         Icons.factory_outlined,
-                        color: Color(0xFF0284C7),
+                        color: Color(0xFF059669),
                         size: 22,
                       ),
                     ),
@@ -203,7 +203,7 @@ class UmkmDemandView extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 11.5,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF0284C7),
+                              color: Color(0xFF047857),
                             ),
                           ),
                           Text(
@@ -238,12 +238,12 @@ class UmkmDemandView extends StatelessWidget {
                             content: Text(
                               'Form penawaran ke ${rfq['factory_name']} siap dikirim!',
                             ),
-                            backgroundColor: const Color(0xFF0284C7),
+                            backgroundColor: const Color(0xFF059669),
                           ),
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0284C7),
+                        backgroundColor: const Color(0xFF059669),
                         foregroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(

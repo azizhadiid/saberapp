@@ -39,9 +39,7 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Color _getRoleColor(String role) {
-    if (role == 'perusahaan_baja') return const Color(0xFF059669);
-    if (role == 'perusahaan_hijau') return const Color(0xFF0284C7);
-    return const Color(0xFF4F46E5);
+    return const Color(0xFF059669); // Seragam Hijau Emerald
   }
 
   String _getNameLabel(String role) {
@@ -358,14 +356,14 @@ class _RegisterPageState extends State<RegisterPage> {
                                 roleKey: 'perusahaan_hijau',
                                 title: 'Perusahaan Hijau',
                                 icon: Icons.recycling_rounded,
-                                activeColor: const Color(0xFF0284C7),
+                                activeColor: const Color(0xFF059669),
                               ),
                               const SizedBox(width: 4),
                               _buildCenteredRoleTab(
                                 roleKey: 'pemerintah',
                                 title: 'Pemerintah',
                                 icon: Icons.account_balance_outlined,
-                                activeColor: const Color(0xFF4F46E5),
+                                activeColor: const Color(0xFF059669),
                               ),
                             ],
                           ),

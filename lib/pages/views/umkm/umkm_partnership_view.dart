@@ -39,7 +39,7 @@ class _UmkmPartnershipViewState extends State<UmkmPartnershipView> {
   static const primaryEmerald = Color(0xFF059669);
   static const darkEmerald = Color(0xFF065F46);
   static const lightEmeraldBg = Color(0xFFECFDF5);
-  static const primaryCyan = Color(0xFF0284C7);
+  static const primaryCyan = Color(0xFF047857); // Deep Emerald
 
   @override
   void initState() {
@@ -1275,19 +1275,19 @@ class _UmkmPartnershipViewState extends State<UmkmPartnershipView> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFF6FF),
+                    color: lightEmeraldBg,
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.card_giftcard_rounded, size: 12, color: primaryCyan),
+                      const Icon(Icons.card_giftcard_rounded, size: 12, color: primaryEmerald),
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
                           item['esg_support_program'].toString(),
-                          style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Color(0xFF1E40AF)),
+                          style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: darkEmerald),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),

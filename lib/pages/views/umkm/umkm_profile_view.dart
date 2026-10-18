@@ -70,7 +70,7 @@ class _UmkmProfileViewState extends State<UmkmProfileView> {
   static const primaryEmerald = Color(0xFF059669);
   static const darkEmerald = Color(0xFF065F46);
   static const lightEmeraldBg = Color(0xFFECFDF5);
-  static const primaryCyan = Color(0xFF0284C7);
+  static const primaryCyan = Color(0xFF047857); // Deep Emerald
 
   @override
   void initState() {
@@ -707,15 +707,15 @@ class _UmkmProfileViewState extends State<UmkmProfileView> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: _companyType == 'umkm' ? lightEmeraldBg : const Color(0xFFE0F2FE),
+                    color: lightEmeraldBg,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     _companyType == 'umkm' ? 'UMKM' : 'Korporasi Hijau',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: _companyType == 'umkm' ? darkEmerald : primaryCyan,
+                      color: darkEmerald,
                     ),
                   ),
                 ),
@@ -1433,7 +1433,7 @@ class _UmkmProfileViewState extends State<UmkmProfileView> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: _companyType == 'perusahaan_hijau' ? const Color(0xFFF0F9FF) : Colors.white,
+                color: _companyType == 'perusahaan_hijau' ? lightEmeraldBg : Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: _companyType == 'perusahaan_hijau' ? primaryCyan : const Color(0xFFE2E8F0),
