@@ -688,10 +688,7 @@ class _CbamPageState extends State<CbamPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {},
-        ),
+        automaticallyImplyLeading: false,
         title: const Column(
           children: [
             Text(
