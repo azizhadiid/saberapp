@@ -14,6 +14,7 @@ import 'views/pemerintahan/gov_profile_inspector_view.dart';
 import 'views/umkm/umkm_katalog_view.dart';
 import 'views/umkm/umkm_demand_view.dart';
 import 'views/umkm/umkm_partnership_view.dart';
+import 'views/umkm/umkm_profile_view.dart';
 import 'views/umkm/umkm_add_supply_dialog.dart';
 
 class MainContainer extends StatefulWidget {
@@ -63,7 +64,7 @@ class _MainContainerState extends State<MainContainer> {
         UmkmKatalogView(onAddSupply: _openAddSupplyDialog), // 0: Katalog Pasokan
         const UmkmDemandView(),                             // 1: Permintaan Pabrik
         const UmkmPartnershipView(),                        // 2: Kemitraan & Standar
-        const ProfilePage(),                                // 3: Profil UMKM
+        const UmkmProfileView(),                            // 3: Profil Usaha / UMKM
       ];
     } else if (role == 'pemerintah') {
       // 2. Ekosistem Pemerintah (Regulator & Auditor MRV)
@@ -190,7 +191,7 @@ class _MainContainerState extends State<MainContainer> {
   /// 2. LAYOUT PERUSAHAAN HIJAU (UMKM SCRAP & GREEN TECH SUPPLIER)
   /// ==========================================================================
   Widget _buildGreenCompanyScaffold(bool isKeyboardVisible) {
-    const primaryGreenTech = Color(0xFF0284C7); // Sky Blue / Cyan Eco
+    const primaryGreenTech = Color(0xFF059669); // Emerald Green Usaha Hijau
 
     return Scaffold(
       body: _screens[_navIndex],
@@ -236,7 +237,7 @@ class _MainContainerState extends State<MainContainer> {
                       ),
                       _buildNavItem(
                         icon: Icons.storefront_outlined,
-                        label: 'Profil UMKM',
+                        label: 'Profil Usaha',
                         index: 3,
                         activeColor: primaryGreenTech,
                       ),

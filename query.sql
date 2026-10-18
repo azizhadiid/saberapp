@@ -782,3 +782,124 @@ VALUES
   ('PT Gunung Raja Paksi Tbk', 'Cikarang, Bekasi - Jawa Barat', 'Shredded Scrap Kerapatan Tinggi (MRF)', '900 Ton / Bulan', 'Rp 7.300.000 / Ton', 'Bodi Otomotif Cacah, Densitas > 0.9 t/m3', 'Reguler • Penerimaan Mingguan', '02 November 2026'),
   ('PT Bhirawa Steel Surabaya', 'Margomulyo, Surabaya - Jawa Timur', 'Prompt Industrial Busheling & Pelat Bersih', '600 Ton / Bulan', 'Rp 7.450.000 / Ton', 'Sisa Stamping Pabrik Logam, Siap Umpan Induction', 'Tinggi • Pasokan Mendesak', '25 Oktober 2026'),
   ('PT Ispat Indo', 'Sepanjang, Sidoarjo - Jawa Timur', 'Briket Biomassa Cangkang Sawit Terkarbonisasi', '400 Ton / Bulan', 'Rp 2.250.000 / Ton', 'Kadar Air < 8%, Nilai Kalor > 4.500 kkal/kg', 'R&D Transisi Kokas Hijau', '10 November 2026');
+
+-- ============================================================================
+-- H. MIGRASI KOLOM KLASIFIKASI & VERIFIKASI PEMERINTAH (UMKM vs PERUSAHAAN HIJAU)
+-- ============================================================================
+-- Menambahkan kolom company_type dan verifikasi seleksi pemerintah pada tabel companies
+-- agar Pemerintah (Kemenperin/Auditor MRF) dapat menyeleksi UMKM / Perusahaan Hijau,
+-- dan Pabrik Baja dapat memilih bertransaksi dengan mitra yang terverifikasi resmi.
+ALTER TABLE public.companies 
+  ADD COLUMN IF NOT EXISTS company_type TEXT DEFAULT 'umkm',
+  ADD COLUMN IF NOT EXISTS location TEXT,
+  ADD COLUMN IF NOT EXISTS nib TEXT,
+  ADD COLUMN IF NOT EXISTS pic_name TEXT,
+  ADD COLUMN IF NOT EXISTS monthly_capacity NUMERIC DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS facilities TEXT DEFAULT 'Timbangan Jembatan 60 Ton, Mesin Baler Pres Hidrolik, Pemisah Magnetik MRF',
+  -- Kolom Verifikasi & Seleksi Pemerintah:
+  ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS verification_status TEXT DEFAULT 'menunggu_verifikasi',
+  ADD COLUMN IF NOT EXISTS verified_at TIMESTAMP WITH TIME ZONE,
+  ADD COLUMN IF NOT EXISTS verified_by TEXT,
+  ADD COLUMN IF NOT EXISTS verification_notes TEXT,
+  ADD COLUMN IF NOT EXISTS verification_grade TEXT DEFAULT 'A';
+
+-- Pasang constraint check agar nilai company_type valid
+DO $$ 
+BEGIN 
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'companies_company_type_check'
+  ) THEN 
+    ALTER TABLE public.companies 
+    ADD CONSTRAINT companies_company_type_check 
+    CHECK (company_type IN ('umkm', 'perusahaan_hijau', 'perusahaan_baja', 'pemerintah'));
+  END IF; 
+END $$;
+
+-- Pasang constraint check status verifikasi pemerintah
+DO $$ 
+BEGIN 
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'companies_verification_status_check'
+  ) THEN 
+    ALTER TABLE public.companies 
+    ADD CONSTRAINT companies_verification_status_check 
+    CHECK (verification_status IN ('terverifikasi', 'menunggu_verifikasi', 'ditolak', 'perlu_perbaikan'));
+  END IF; 
+END $$;
+
+-- Set nilai default 'umkm' untuk data pemasok hijau yang belum terisi
+UPDATE public.companies 
+SET company_type = 'umkm' 
+WHERE role = 'perusahaan_hijau' AND (company_type IS NULL OR company_type = '');
+
+-- Inisialisasi status seleksi awal (default lolos seleksi dengan catatan inspeksi)
+UPDATE public.companies 
+SET 
+  is_verified = true,
+  verification_status = 'terverifikasi',
+  verified_by = 'Direktorat Industri Logam, Kemenperin RI',
+  verified_at = timezone('utc'::text, now()),
+  verification_notes = 'Lolos seleksi uji sortir MRF bebas zat radioaktif & siap umpan EAF 52%',
+  verification_grade = 'A'
+WHERE role = 'perusahaan_hijau' AND (is_verified IS NULL OR is_verified = false);
+
+-- ============================================================================
+-- I. BENTUK KUERI TRANSAKSI MARKET DI PERUSAHAAN BAJA
+-- ============================================================================
+-- Digunakan oleh halaman Green Market Pabrik Baja untuk memfilter
+-- dan memilih apakah ingin bertransaksi dengan mitra 'umkm' atau 'perusahaan_hijau':
+
+-- 1. Kueri Transaksi Khusus Pasokan dari Mitra UMKM:
+-- SELECT 
+--   s.id AS supply_id,
+--   s.title,
+--   s.category,
+--   s.depo,
+--   s.tonnage_available,
+--   s.unit,
+--   s.fe_grade,
+--   s.cu_impurity,
+--   s.price_per_ton,
+--   s.co2_saved_ton,
+--   s.mrf_certified,
+--   s.status,
+--   c.id AS company_id,
+--   c.name AS vendor_name,
+--   c.company_type,
+--   c.pic_name,
+--   c.phone,
+--   c.location,
+--   c.mrv_status
+-- FROM public.umkm_supplies s
+-- LEFT JOIN public.companies c ON s.company_id = c.id
+-- WHERE (c.company_type = 'umkm' OR c.company_type IS NULL)
+--   AND s.status != 'Habis Terjual'
+-- ORDER BY s.created_at DESC;
+
+-- 2. Kueri Transaksi Khusus Pasokan dari Mitra Perusahaan Hijau (Korporasi/Modern MRF):
+-- SELECT 
+--   s.id AS supply_id,
+--   s.title,
+--   s.category,
+--   s.depo,
+--   s.tonnage_available,
+--   s.unit,
+--   s.fe_grade,
+--   s.cu_impurity,
+--   s.price_per_ton,
+--   s.co2_saved_ton,
+--   s.mrf_certified,
+--   s.status,
+--   c.id AS company_id,
+--   c.name AS vendor_name,
+--   c.company_type,
+--   c.pic_name,
+--   c.phone,
+--   c.location,
+--   c.mrv_status
+-- FROM public.umkm_supplies s
+-- JOIN public.companies c ON s.company_id = c.id
+-- WHERE c.company_type = 'perusahaan_hijau'
+--   AND s.status != 'Habis Terjual'
+-- ORDER BY s.created_at DESC;
