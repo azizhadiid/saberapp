@@ -64,7 +64,6 @@ class _MainContainerState extends State<MainContainer> {
         const UmkmDemandView(),                             // 1: Permintaan Pabrik
         const UmkmPartnershipView(),                        // 2: Kemitraan & Standar
         const ProfilePage(),                                // 3: Profil UMKM
-        const MarketPage(),                                 // 4: Green Market Hub
       ];
     } else if (role == 'pemerintah') {
       // 2. Ekosistem Pemerintah (Regulator & Auditor MRV)
@@ -195,85 +194,54 @@ class _MainContainerState extends State<MainContainer> {
 
     return Scaffold(
       body: _screens[_navIndex],
-      floatingActionButton: isKeyboardVisible
-          ? null
-          : Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FloatingActionButton(
-                  onPressed: () {
-                    // Jika belum di tab 4, beralih ke hub market, jika sudah buka form pasok
-                    if (_navIndex != 4) {
-                      setState(() => _navIndex = 4);
-                    } else {
-                      _openAddSupplyDialog();
-                    }
-                  },
-                  backgroundColor: _navIndex == 4
-                      ? const Color(0xFF0284C7)
-                      : const Color(0xFF0369A1),
-                  shape: const CircleBorder(),
-                  elevation: 4,
-                  child: const Icon(
-                    Icons.add_business,
-                    color: Colors.white,
-                    size: 26,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Pasok Scrap',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: _navIndex == 4
-                        ? const Color(0xFF0284C7)
-                        : const Color(0xFF6B7280),
-                    fontWeight: _navIndex == 4
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                ),
-              ],
-            ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: isKeyboardVisible
           ? null
-          : BottomAppBar(
-              color: Colors.white,
-              shape: const CircularNotchedRectangle(),
-              notchMargin: 8.0,
-              child: SizedBox(
-                height: 60,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildNavItem(
-                      icon: Icons.inventory_2_outlined,
-                      label: 'Katalog',
-                      index: 0,
-                      activeColor: primaryGreenTech,
-                    ),
-                    _buildNavItem(
-                      icon: Icons.assignment_outlined,
-                      label: 'Permintaan',
-                      index: 1,
-                      activeColor: primaryGreenTech,
-                    ),
-                    const SizedBox(width: 40),
-                    _buildNavItem(
-                      icon: Icons.handshake_outlined,
-                      label: 'Kemitraan',
-                      index: 2,
-                      activeColor: primaryGreenTech,
-                    ),
-                    _buildNavItem(
-                      icon: Icons.store_outlined,
-                      label: 'Profil UMKM',
-                      index: 3,
-                      activeColor: primaryGreenTech,
-                    ),
-                  ],
+          : Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: const Border(
+                  top: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                child: SizedBox(
+                  height: 60,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildNavItem(
+                        icon: Icons.inventory_2_outlined,
+                        label: 'Katalog',
+                        index: 0,
+                        activeColor: primaryGreenTech,
+                      ),
+                      _buildNavItem(
+                        icon: Icons.assignment_outlined,
+                        label: 'Permintaan',
+                        index: 1,
+                        activeColor: primaryGreenTech,
+                      ),
+                      _buildNavItem(
+                        icon: Icons.handshake_outlined,
+                        label: 'Kemitraan',
+                        index: 2,
+                        activeColor: primaryGreenTech,
+                      ),
+                      _buildNavItem(
+                        icon: Icons.storefront_outlined,
+                        label: 'Profil UMKM',
+                        index: 3,
+                        activeColor: primaryGreenTech,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

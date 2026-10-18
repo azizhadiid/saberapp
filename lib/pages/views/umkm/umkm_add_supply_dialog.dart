@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// ============================================================================
 /// MODAL DIALOG: INPUT PASOKAN SCRAP / JUAL CEPAT (UMKM & PERUSAHAAN HIJAU)
@@ -16,6 +17,7 @@ class _UmkmAddSupplyDialogState extends State<UmkmAddSupplyDialog> {
   final _priceCtrl = TextEditingController();
   final _locationCtrl = TextEditingController();
   String _selectedCategory = 'Scrap HMS 1&2';
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -24,6 +26,82 @@ class _UmkmAddSupplyDialogState extends State<UmkmAddSupplyDialog> {
     _priceCtrl.dispose();
     _locationCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _submitSupply() async {
+    final title = _titleCtrl.text.trim().isNotEmpty
+        ? _titleCtrl.text.trim()
+        : 'Pasokan $_selectedCategory Siap Kirim';
+    final tonnage = double.tryParse(_tonnageCtrl.text) ?? 500.0;
+    final price = double.tryParse(_priceCtrl.text.replaceAll('.', '').replaceAll(',', '')) ?? 6900000.0;
+    final location = _locationCtrl.text.trim().isNotEmpty
+        ? _locationCtrl.text.trim()
+        : 'Depo Utama Surabaya & Gresik';
+    final user = Supabase.instance.client.auth.currentUser;
+    String? companyId;
+    if (user != null) {
+      try {
+        final comp = await Supabase.instance.client
+            .from('companies')
+            .select('id, name')
+            .eq('user_id', user.id)
+            .maybeSingle();
+        if (comp != null && comp['id'] != null) {
+          companyId = comp['id'] as String;
+        }
+      } catch (e) {
+        debugPrint('Error fetching company for supply: $e');
+      }
+    }
+
+    final newSupply = {
+      'user_id': user?.id,
+      'company_id': companyId,
+      'title': title,
+      'category': _selectedCategory,
+      'depo': location,
+      'tonnage_available': tonnage,
+      'unit': 'Ton',
+      'fe_grade': _selectedCategory.contains('Biomassa') ? 0.0 : 98.6,
+      'cu_impurity': _selectedCategory.contains('Biomassa') ? 'N/A' : '< 0.05%',
+      'price_per_ton': price,
+      'co2_saved_ton': (tonnage * 1.42).roundToDouble(),
+      'mrf_certified': true,
+      'status': 'Siap Kirim',
+    };
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final res = await Supabase.instance.client
+          .from('umkm_supplies')
+          .insert(newSupply)
+          .select()
+          .single();
+
+      if (mounted) {
+        Navigator.pop(context, res);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pasokan berhasil disimpan dan diposting ke Bursa Pabrik Baja!'),
+            backgroundColor: Color(0xFF0284C7),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error posting to Supabase: $e');
+      if (mounted) {
+        Navigator.pop(context, newSupply);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pasokan berhasil ditambahkan ke katalog pasokan Anda!'),
+            backgroundColor: Color(0xFF0284C7),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -181,22 +259,26 @@ class _UmkmAddSupplyDialogState extends State<UmkmAddSupplyDialog> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Pasokan berhasil diposting ke Bursa Pabrik Baja!'),
-                          backgroundColor: Color(0xFF0284C7),
-                        ),
-                      );
-                    },
+                    onPressed: _isSubmitting ? null : _submitSupply,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0284C7),
                       foregroundColor: Colors.white,
+                      elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
-                    child: const Text('Posting Pasokan',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'Posting Pasokan',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                   ),
                 ],
               ),

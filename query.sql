@@ -667,3 +667,118 @@ CREATE POLICY "Users can update and delete profile images"
 ON storage.objects FOR UPDATE
 TO authenticated
 USING (bucket_id IN ('profile_perushaan', 'avatars'));
+
+
+-- ============================================================================
+-- 8. TABEL EKOSISTEM PERUSAHAAN HIJAU / UMKM SIRKULAR & SCRAP EAF
+-- Jalankan di: Supabase Dashboard -> SQL Editor -> Run
+-- ============================================================================
+
+-- A. Tabel Katalog Pasokan Bahan Baku Sirkular (Scrap & Biomassa)
+CREATE TABLE IF NOT EXISTS public.umkm_supplies (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  company_id UUID REFERENCES public.companies(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  category TEXT NOT NULL,
+  depo TEXT NOT NULL,
+  tonnage_available NUMERIC NOT NULL DEFAULT 0,
+  unit TEXT DEFAULT 'Ton',
+  fe_grade NUMERIC DEFAULT 0,
+  cu_impurity TEXT DEFAULT '< 0.08%',
+  price_per_ton NUMERIC NOT NULL DEFAULT 0,
+  co2_saved_ton NUMERIC DEFAULT 0,
+  mrf_certified BOOLEAN DEFAULT true,
+  status TEXT DEFAULT 'Siap Kirim',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Script Migrasi jika tabel umkm_supplies sudah dibuat sebelumnya:
+ALTER TABLE public.umkm_supplies 
+  ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS company_id UUID REFERENCES public.companies(id) ON DELETE CASCADE;
+
+-- B. Tabel Permintaan Resmi Pabrik Baja (RFQ Industri untuk Pemasok Hijau)
+CREATE TABLE IF NOT EXISTS public.umkm_rfq_demands (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  factory_name TEXT NOT NULL,
+  location TEXT NOT NULL,
+  need_material TEXT NOT NULL,
+  target_volume TEXT NOT NULL,
+  max_price TEXT NOT NULL,
+  spec TEXT NOT NULL,
+  urgency TEXT NOT NULL,
+  delivery_deadline TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- C. Aktifkan RLS untuk tabel-tabel UMKM
+ALTER TABLE public.umkm_supplies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.umkm_rfq_demands ENABLE ROW LEVEL SECURITY;
+
+-- D. Policies umkm_supplies:
+DROP POLICY IF EXISTS "Allow public select on umkm_supplies" ON public.umkm_supplies;
+DROP POLICY IF EXISTS "Allow authenticated insert on umkm_supplies" ON public.umkm_supplies;
+DROP POLICY IF EXISTS "Allow authenticated update on umkm_supplies" ON public.umkm_supplies;
+DROP POLICY IF EXISTS "Allow authenticated delete on umkm_supplies" ON public.umkm_supplies;
+
+CREATE POLICY "Allow select on umkm_supplies"
+  ON public.umkm_supplies FOR SELECT
+  USING (
+    user_id = auth.uid() 
+    OR user_id IS NULL 
+    OR auth.role() = 'authenticated'
+  );
+
+CREATE POLICY "Allow authenticated insert on umkm_supplies"
+  ON public.umkm_supplies FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    user_id = auth.uid() OR user_id IS NULL
+  );
+
+CREATE POLICY "Allow authenticated update on umkm_supplies"
+  ON public.umkm_supplies FOR UPDATE
+  TO authenticated
+  USING (
+    user_id = auth.uid() OR user_id IS NULL
+  )
+  WITH CHECK (
+    user_id = auth.uid() OR user_id IS NULL
+  );
+
+CREATE POLICY "Allow authenticated delete on umkm_supplies"
+  ON public.umkm_supplies FOR DELETE
+  TO authenticated
+  USING (
+    user_id = auth.uid()
+  );
+
+-- E. Policies umkm_rfq_demands:
+CREATE POLICY "Allow public select on umkm_rfq_demands"
+  ON public.umkm_rfq_demands FOR SELECT
+  USING (true);
+
+CREATE POLICY "Allow authenticated insert on umkm_rfq_demands"
+  ON public.umkm_rfq_demands FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+-- F. Data Awal (Seed Data) umkm_supplies
+INSERT INTO public.umkm_supplies 
+  (title, category, depo, tonnage_available, unit, fe_grade, cu_impurity, price_per_ton, co2_saved_ton, mrf_certified, status)
+VALUES
+  ('Heavy Melting Steel (HMS 1&2) Siap Umpan EAF', 'Scrap HMS 1&2', 'Depo Utama Surabaya & Gresik, Jawa Timur', 1850, 'Ton', 98.4, '< 0.08%', 6850000, 2627.0, true, 'Siap Kirim'),
+  ('Shredded Scrap Densitas Tinggi (Otomotif Daur Ulang)', 'Shredded Scrap MRF', 'Sentra Daur Ulang Cilegon, Banten', 1200, 'Ton', 99.1, '< 0.05%', 7250000, 1848.0, true, 'Siap Kirim'),
+  ('New Prompt Busheling Scrap (Stamping Pabrik Mobil)', 'Prompt Industrial Scrap', 'Kawasan Industri Cikarang, Karawang - Jawa Barat', 950, 'Ton', 99.5, '< 0.02%', 7450000, 1406.0, true, 'Tersedia Terbatas'),
+  ('Briket Cangkang Sawit Terkarbonisasi (Reduktor Hijau)', 'Bahan Baku Biomassa', 'Sentra Pengolahan Biomassa Jambi & Riau', 650, 'Ton', 0.0, 'N/A', 2100000, 1170.0, true, 'Siap Kirim'),
+  ('Bundled Stampings & Plat Bersih Rekondisi', 'Prompt Industrial Scrap', 'Sentra Pengecoran Logam Ceper, Klaten', 450, 'Ton', 98.9, '< 0.03%', 7100000, 639.0, true, 'Siap Kirim');
+
+-- G. Data Awal (Seed Data) umkm_rfq_demands
+INSERT INTO public.umkm_rfq_demands
+  (factory_name, location, need_material, target_volume, max_price, spec, urgency, delivery_deadline)
+VALUES
+  ('PT Krakatau Steel (Persero) Tbk', 'Cilegon, Banten', 'Scrap Baja Heavy Melting Steel (HMS 1)', '1.500 Ton / Bulan', 'Rp 7.100.000 / Ton', 'Fe > 98.2%, Bebas Oli & Cat, Cu < 0.08%', 'Tinggi • Kontrak EAF 6 Bulan', '28 Oktober 2026'),
+  ('PT Gunung Raja Paksi Tbk', 'Cikarang, Bekasi - Jawa Barat', 'Shredded Scrap Kerapatan Tinggi (MRF)', '900 Ton / Bulan', 'Rp 7.300.000 / Ton', 'Bodi Otomotif Cacah, Densitas > 0.9 t/m3', 'Reguler • Penerimaan Mingguan', '02 November 2026'),
+  ('PT Bhirawa Steel Surabaya', 'Margomulyo, Surabaya - Jawa Timur', 'Prompt Industrial Busheling & Pelat Bersih', '600 Ton / Bulan', 'Rp 7.450.000 / Ton', 'Sisa Stamping Pabrik Logam, Siap Umpan Induction', 'Tinggi • Pasokan Mendesak', '25 Oktober 2026'),
+  ('PT Ispat Indo', 'Sepanjang, Sidoarjo - Jawa Timur', 'Briket Biomassa Cangkang Sawit Terkarbonisasi', '400 Ton / Bulan', 'Rp 2.250.000 / Ton', 'Kadar Air < 8%, Nilai Kalor > 4.500 kkal/kg', 'R&D Transisi Kokas Hijau', '10 November 2026');
