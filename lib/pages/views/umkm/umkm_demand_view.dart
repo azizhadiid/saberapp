@@ -92,11 +92,19 @@ class _UmkmDemandViewState extends State<UmkmDemandView> {
 
       if (user != null) {
         try {
-          final comp = await Supabase.instance.client
+          var comp = await Supabase.instance.client
               .from('companies')
               .select('id, name')
               .eq('user_id', user.id)
               .maybeSingle();
+
+          if (comp == null && user.email != null && user.email!.isNotEmpty) {
+            comp = await Supabase.instance.client
+                .from('companies')
+                .select('id, name')
+                .eq('email', user.email!)
+                .maybeSingle();
+          }
 
           if (comp != null) {
             _myCompanyId = comp['id']?.toString();
@@ -116,12 +124,20 @@ class _UmkmDemandViewState extends State<UmkmDemandView> {
       final List<Map<String, dynamic>> rawOrders =
           List<Map<String, dynamic>>.from(response);
 
-      // Filter pesanan relevan untuk perusahaan UMKM yang sedang login (dengan fallback rawOrders jika demo/seeder)
-      final relevantOrders = (_myCompanyId != null && _myCompanyId!.isNotEmpty)
-          ? rawOrders.where((o) => o['seller_company_id']?.toString() == _myCompanyId || o['seller_user_id']?.toString() == user?.id).toList()
-          : <Map<String, dynamic>>[];
+      // Filter pesanan relevan secara ketat untuk UMKM yang sedang login
+      final relevantOrders = rawOrders.where((o) {
+        final matchesSellerCompany = _myCompanyId != null &&
+            _myCompanyId!.isNotEmpty &&
+            o['seller_company_id']?.toString() == _myCompanyId;
+        final matchesSellerUser = user != null &&
+            o['seller_user_id']?.toString() == user.id;
+        final matchesSellerName = _myCompanyName != null &&
+            _myCompanyName!.isNotEmpty &&
+            (o['seller_name']?.toString().toLowerCase() == _myCompanyName!.toLowerCase());
+        return matchesSellerCompany || matchesSellerUser || matchesSellerName;
+      }).toList();
 
-      final finalOrders = relevantOrders.isNotEmpty ? relevantOrders : rawOrders;
+      final finalOrders = relevantOrders;
 
       if (mounted) {
         setState(() {

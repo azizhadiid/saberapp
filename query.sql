@@ -1142,5 +1142,38 @@ CREATE POLICY "Allow delete on umkm_orders"
   TO authenticated
   USING (true);
 
+-- 1. Pastikan RLS aktif pada tabel pesanan
+ALTER TABLE public.umkm_orders ENABLE ROW LEVEL SECURITY;
 
-
+-- 2. Kebijakan untuk Pabrik Baja (Pembeli): Hanya melihat PO miliknya sendiri
+DROP POLICY IF EXISTS "Buyers can view their own orders" ON public.umkm_orders;
+CREATE POLICY "Buyers can view their own orders"
+ON public.umkm_orders
+FOR SELECT
+USING (
+  auth.uid() = buyer_user_id
+  OR buyer_company_id IN (SELECT id FROM public.companies WHERE user_id = auth.uid())
+);
+
+-- 3. Kebijakan untuk UMKM / Pemasok (Penjual): Hanya melihat PO yang masuk ke tokonya
+DROP POLICY IF EXISTS "Sellers can view incoming orders" ON public.umkm_orders;
+CREATE POLICY "Sellers can view incoming orders"
+ON public.umkm_orders
+FOR SELECT
+USING (
+  auth.uid() = seller_user_id
+  OR seller_company_id IN (SELECT id FROM public.companies WHERE user_id = auth.uid())
+);
+
+-- 4. Kebijakan untuk Pemerintah / Regulator: Dapat memantau seluruh transaksi MRV nasional
+DROP POLICY IF EXISTS "Regulator can view all orders" ON public.umkm_orders;
+CREATE POLICY "Regulator can view all orders"
+ON public.umkm_orders
+FOR SELECT
+USING (
+  EXISTS (
+    SELECT 1 FROM public.companies
+    WHERE user_id = auth.uid() AND (role = 'pemerintah' OR role = 'admin')
+  )
+);
+

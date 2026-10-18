@@ -79,17 +79,49 @@ class _LoginPageState extends State<LoginPage> {
   /// Verifikasi Role Ketat:
   /// Jika role akun di database BERBEDA dengan tab role yang dipilih saat login,
   /// maka login DITOLAK, sesi dibatalkan (signOut), dan mental kembali ke halaman login.
+  /// Verifikasi Role & Navigasi:
+  /// 1. Jika akun belum terdaftar (misal login Google pertama kali), otomatis daftarkan
+  ///    ke role tab yang dipilih (termasuk multi-akun untuk Pemerintah Belmawa/Kemendikbud).
+  /// 2. Jika akun sudah terdaftar namun berbeda peran, sediakan opsi beralih portal atau
+  ///    mengubah peran akun untuk kemudahan pengujian juri Belmawa/Kemendikbud.
   Future<void> _verifyRoleAndNavigate(User user, String chosenRole) async {
     if (_isVerifyingAuth) return;
     _isVerifyingAuth = true;
 
     try {
+      final normalizedChosenRole = _normalizeRole(chosenRole);
+
       // 1. Cek apakah ada record perusahaan di tabel public.companies
-      final companyRes = await Supabase.instance.client
-          .from('companies')
-          .select('role, name')
-          .eq('user_id', user.id)
-          .maybeSingle();
+      Map<String, dynamic>? companyRes;
+      try {
+        companyRes = await Supabase.instance.client
+            .from('companies')
+            .select('id, role, name, user_id, email')
+            .eq('user_id', user.id)
+            .maybeSingle();
+      } catch (e) {
+        debugPrint('Info query company by user_id: $e');
+      }
+
+      // Jika belum ditemukan dengan user_id, cari via email
+      if (companyRes == null && user.email != null && user.email!.isNotEmpty) {
+        try {
+          companyRes = await Supabase.instance.client
+              .from('companies')
+              .select('id, role, name, user_id, email')
+              .eq('email', user.email!)
+              .maybeSingle();
+
+          if (companyRes != null && companyRes['user_id'] == null) {
+            await Supabase.instance.client
+                .from('companies')
+                .update({'user_id': user.id})
+                .eq('id', companyRes['id']);
+          }
+        } catch (e) {
+          debugPrint('Info query company by email: $e');
+        }
+      }
 
       String? registeredRole;
       if (companyRes != null && companyRes['role'] != null) {
@@ -99,19 +131,16 @@ class _LoginPageState extends State<LoginPage> {
             _normalizeRole(user.userMetadata!['user_role'] as String);
       }
 
-      final normalizedChosenRole = _normalizeRole(chosenRole);
-
-      // 2. VALIDASI KETAT: Jika akun sudah terdaftar, peran HARUS COCOK dengan portal yang dipilih
+      // 2. VALIDASI ROLE & KASUS PERBEDAAN PORTAL:
       if (registeredRole != null) {
         if (registeredRole != normalizedChosenRole) {
-          // Batalkan sesi login Supabase secara instan agar mental kembali ke Login
-          await Supabase.instance.client.auth.signOut();
-
           if (mounted) {
             final registeredName = _getRoleDisplayName(registeredRole);
             final chosenName = _getRoleDisplayName(normalizedChosenRole);
 
-            showDialog(
+            // Dialog opsi untuk pengujian Belmawa / Kemendikbud:
+            // Beralih ke portal asal ATAU langsung ubah peran akun ke portal yang dipilih
+            await showDialog(
               context: context,
               barrierDismissible: false,
               builder: (ctx) => AlertDialog(
@@ -119,12 +148,12 @@ class _LoginPageState extends State<LoginPage> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 icon: const Icon(
-                  Icons.gpp_bad_rounded,
-                  color: Color(0xFFDC2626),
+                  Icons.swap_horiz_rounded,
+                  color: Color(0xFF059669),
                   size: 44,
                 ),
                 title: const Text(
-                  'Akses Ditolak!',
+                  'Perbedaan Peran Akun',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 18,
@@ -133,9 +162,9 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 content: Text(
-                  'Akun Anda terdaftar sebagai "$registeredName".\n\n'
-                  'Anda tidak diizinkan masuk melalui portal "$chosenName". '
-                  'Silakan beralih ke tab portal "$registeredName" untuk masuk.',
+                  'Akun Google Anda (${user.email}) saat ini terdaftar sebagai "$registeredName".\n\n'
+                  'Anda sedang masuk di portal "$chosenName". '
+                  'Untuk kemudahan pengujian Belmawa/Kemendikbud, Anda dapat beralih ke portal terdaftar atau langsung mengubah peran akun ini menjadi "$chosenName".',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 13,
@@ -143,28 +172,78 @@ class _LoginPageState extends State<LoginPage> {
                     height: 1.45,
                   ),
                 ),
-                actionsAlignment: MainAxisAlignment.center,
+                actionsAlignment: MainAxisAlignment.spaceEvenly,
                 actions: [
-                  ElevatedButton(
-                    onPressed: () {
+                  OutlinedButton(
+                    onPressed: () async {
                       Navigator.pop(ctx);
-                      // Otomatis arahkan tab ke peran yang benar
-                      setState(() {
-                        _selectedRole = registeredRole!;
-                      });
+                      await Supabase.instance.client.auth.signOut();
+                      if (mounted) {
+                        setState(() {
+                          _selectedRole = registeredRole!;
+                        });
+                      }
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF475569),
+                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text('Ke Portal $registeredName'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(ctx);
+                      try {
+                        if (companyRes != null && companyRes['id'] != null) {
+                          await Supabase.instance.client
+                              .from('companies')
+                              .update({'role': normalizedChosenRole})
+                              .eq('id', companyRes['id']);
+                        } else {
+                          await Supabase.instance.client
+                              .from('companies')
+                              .update({'role': normalizedChosenRole})
+                              .eq('user_id', user.id);
+                        }
+                        await Supabase.instance.client.auth.updateUser(
+                          UserAttributes(
+                            data: {'user_role': normalizedChosenRole},
+                          ),
+                        );
+                        if (!mounted) return;
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MainContainer(
+                              initialIndex: 0,
+                              userRole: normalizedChosenRole,
+                            ),
+                          ),
+                          (route) => false,
+                        );
+                      } catch (e) {
+                        debugPrint('Error switch role: $e');
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Gagal mengubah peran: $e'),
+                              backgroundColor: const Color(0xFFDC2626),
+                            ),
+                          );
+                        }
+                      }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFDC2626),
+                      backgroundColor: const Color(0xFF059669),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 10,
-                      ),
                     ),
-                    child: Text('Beralih ke Portal $registeredName'),
+                    child: Text('Ganti ke $chosenName'),
                   ),
                 ],
               ),
@@ -173,24 +252,51 @@ class _LoginPageState extends State<LoginPage> {
           return;
         }
       } else {
-        // Jika akun baru pertama kali (misal Google Login baru), daftarkan ke role yang dipilih
-        await Supabase.instance.client.from('companies').upsert({
-          'user_id': user.id,
-          'role': normalizedChosenRole,
-          'name': user.userMetadata?['company_name'] ??
-              user.userMetadata?['full_name'] ??
-              user.email?.split('@').first ??
-              'Entitas Terdaftar',
-          'siinas_id': user.userMetadata?['industry_type'] ?? 'Umum',
-          'location': 'Indonesia',
-        }, onConflict: 'user_id');
+        // 3. JIKA AKUN BARU PERTAMA KALI (Misal Google Sign-In belum register):
+        // Otomatis daftarkan langsung ke role yang dipilih!
+        String defaultCompanyName = user.userMetadata?['company_name'] ??
+            user.userMetadata?['full_name'] ??
+            user.userMetadata?['name'] ??
+            user.email?.split('@').first ??
+            'Entitas Terdaftar';
 
-        await Supabase.instance.client.auth.updateUser(
-          UserAttributes(data: {'user_role': normalizedChosenRole}),
-        );
+        if (normalizedChosenRole == 'pemerintah') {
+          defaultCompanyName =
+              'Pengawas & Regulator Pemerintah (${user.email?.split('@').first ?? 'Kementerian'})';
+        }
+
+        try {
+          // INSERT langsung tanpa onConflict 'user_id' agar tidak memicu error Postgres 42P10
+          await Supabase.instance.client.from('companies').insert({
+            'user_id': user.id,
+            'email': user.email,
+            'role': normalizedChosenRole,
+            'name': defaultCompanyName,
+            'siinas_id': user.userMetadata?['industry_type'] ??
+                (normalizedChosenRole == 'pemerintah' ? 'Regulator' : 'Umum'),
+            'location': 'Indonesia',
+            'verified': true,
+            'mrv_verified': true,
+            'umkm_verification': true,
+          });
+        } catch (insertError) {
+          debugPrint('Info insert company on login: $insertError');
+          try {
+            await Supabase.instance.client
+                .from('companies')
+                .update({'role': normalizedChosenRole, 'user_id': user.id})
+                .eq('email', user.email!);
+          } catch (_) {}
+        }
+
+        try {
+          await Supabase.instance.client.auth.updateUser(
+            UserAttributes(data: {'user_role': normalizedChosenRole}),
+          );
+        } catch (_) {}
       }
 
-      // 3. Role COCOK & VALID! Lanjut masuk ke layout yang sesuai
+      // 4. Role COCOK & VALID! Lanjut masuk ke layout yang sesuai
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,

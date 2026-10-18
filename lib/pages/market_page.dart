@@ -158,11 +158,20 @@ class _MarketPageState extends State<MarketPage> {
       if (user != null) {
         _buyerUserId = user.id;
         try {
-          final comp = await Supabase.instance.client
+          var comp = await Supabase.instance.client
               .from('companies')
               .select('id, name, location')
               .eq('user_id', user.id)
               .maybeSingle();
+
+          if (comp == null && user.email != null && user.email!.isNotEmpty) {
+            comp = await Supabase.instance.client
+                .from('companies')
+                .select('id, name, location')
+                .eq('email', user.email!)
+                .maybeSingle();
+          }
+
           if (comp != null) {
             _buyerCompanyId = comp['id']?.toString();
             _buyerCompanyName = comp['name']?.toString();
@@ -173,7 +182,13 @@ class _MarketPageState extends State<MarketPage> {
         }
       }
       if (_buyerCompanyName == null || _buyerCompanyName!.isEmpty) {
-        _buyerCompanyName = 'PT DITRA';
+        final userName = user?.userMetadata?['company_name']?.toString() ??
+            user?.userMetadata?['full_name']?.toString() ??
+            user?.userMetadata?['name']?.toString() ??
+            user?.email?.split('@').first;
+        _buyerCompanyName = (userName != null && userName.isNotEmpty)
+            ? (userName.toLowerCase().startsWith('pt') ? userName : 'PT $userName')
+            : 'Pabrik Baja Mitra';
         _buyerLocation = 'Cilegon, Banten';
       }
 
@@ -283,10 +298,27 @@ class _MarketPageState extends State<MarketPage> {
 
   Future<void> _fetchBuyerOrders() async {
     try {
-      final res = await Supabase.instance.client
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
+        if (mounted) {
+          setState(() {
+            _myOrders = [];
+          });
+        }
+        return;
+      }
+
+      var query = Supabase.instance.client
           .from('umkm_orders')
-          .select()
-          .order('created_at', ascending: false);
+          .select();
+
+      if (_buyerCompanyId != null && _buyerCompanyId!.isNotEmpty) {
+        query = query.or('buyer_user_id.eq.${user.id},buyer_company_id.eq.$_buyerCompanyId');
+      } else {
+        query = query.eq('buyer_user_id', user.id);
+      }
+
+      final res = await query.order('created_at', ascending: false);
       final allOrders = List<Map<String, dynamic>>.from(res);
       if (mounted) {
         setState(() {
@@ -366,17 +398,28 @@ class _MarketPageState extends State<MarketPage> {
     final totalCo2Reduced = volumeTon * savingPerTon;
     final orderNo = 'PO-BAJA-${DateTime.now().millisecondsSinceEpoch.toString().substring(6)}';
 
+    final user = Supabase.instance.client.auth.currentUser;
+    final buyerUid = _buyerUserId ?? user?.id;
+
+    String buyerName = _buyerCompanyName ?? 'Pabrik Baja Mitra';
+    final userFullName = user?.userMetadata?['company_name']?.toString() ??
+        user?.userMetadata?['full_name']?.toString() ??
+        user?.userMetadata?['name']?.toString();
+    if (userFullName != null && userFullName.isNotEmpty && (buyerName == 'Pabrik Baja Mitra' || buyerName == 'PT DITRA')) {
+      buyerName = userFullName.toLowerCase().startsWith('pt') ? userFullName : 'PT $userFullName';
+    }
+
     try {
       final newOrder = <String, dynamic>{
         'order_number': orderNo,
-        'buyer_user_id': ?_buyerUserId,
-        'buyer_company_id': ?_buyerCompanyId,
-        'buyer_name': _buyerCompanyName ?? 'PT DITRA',
+        'buyer_user_id': buyerUid,
+        'buyer_company_id': _buyerCompanyId,
+        'buyer_name': buyerName,
         'buyer_location': _buyerLocation ?? 'Cilegon, Banten',
-        'seller_user_id': ?(vendor['seller_user_id']?.toString()),
-        'seller_company_id': ?(vendor['seller_company_id']?.toString()),
+        'seller_user_id': vendor['seller_user_id']?.toString(),
+        'seller_company_id': vendor['seller_company_id']?.toString(),
         'seller_name': vendor['seller_name'] ?? vendor['name'] ?? 'Mitra UMKM Scrap',
-        'supply_id': ?(vendor['supply_id']?.toString()),
+        'supply_id': vendor['supply_id']?.toString(),
         'item_title': vendor['name'] ?? 'Pasokan Scrap EAF',
         'category': vendor['category'] ?? 'Scrap HMS 1&2',
         'order_volume_tons': volumeTon,

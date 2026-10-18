@@ -89,20 +89,58 @@ class _RegisterPageState extends State<RegisterPage> {
   /// Simpan langsung ke tabel public.companies dan auth.users agar 100% tersimpan di database
   Future<void> _saveCompanyRecord(User user, String chosenRole) async {
     try {
-      await Supabase.instance.client.from('companies').upsert({
-        'user_id': user.id,
-        'role': chosenRole,
-        'name': _namaCtrl.text.trim().isNotEmpty
-            ? _namaCtrl.text.trim()
-            : (user.userMetadata?['company_name'] ??
-                  user.userMetadata?['full_name'] ??
-                  user.email?.split('@').first ??
-                  'Entitas Terdaftar'),
-        'siinas_id': _industriCtrl.text.trim().isNotEmpty
-            ? _industriCtrl.text.trim()
-            : 'Umum',
-        'location': 'Indonesia',
-      }, onConflict: 'user_id');
+      final compName = _namaCtrl.text.trim().isNotEmpty
+          ? _namaCtrl.text.trim()
+          : (user.userMetadata?['company_name'] ??
+                user.userMetadata?['full_name'] ??
+                user.email?.split('@').first ??
+                'Entitas Terdaftar');
+      final siinas = _industriCtrl.text.trim().isNotEmpty
+          ? _industriCtrl.text.trim()
+          : (chosenRole == 'pemerintah' ? 'Regulator' : 'Umum');
+
+      // Cek apakah sudah ada record di companies via user_id atau email
+      Map<String, dynamic>? existing;
+      try {
+        existing = await Supabase.instance.client
+            .from('companies')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+      } catch (_) {}
+
+      if (existing == null && user.email != null && user.email!.isNotEmpty) {
+        try {
+          existing = await Supabase.instance.client
+              .from('companies')
+              .select('id')
+              .eq('email', user.email!)
+              .maybeSingle();
+        } catch (_) {}
+      }
+
+      if (existing != null) {
+        await Supabase.instance.client.from('companies').update({
+          'user_id': user.id,
+          'role': chosenRole,
+          'name': compName,
+          'siinas_id': siinas,
+          'location': 'Indonesia',
+          'verified': true,
+        }).eq('id', existing['id']);
+      } else {
+        await Supabase.instance.client.from('companies').insert({
+          'user_id': user.id,
+          'email': user.email,
+          'role': chosenRole,
+          'name': compName,
+          'siinas_id': siinas,
+          'location': 'Indonesia',
+          'verified': true,
+          'mrv_verified': true,
+          'umkm_verification': true,
+        });
+      }
 
       await Supabase.instance.client.auth.updateUser(
         UserAttributes(data: {'user_role': chosenRole}),
