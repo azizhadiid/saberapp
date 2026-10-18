@@ -1054,4 +1054,93 @@ WHERE NOT EXISTS (
   SELECT 1 FROM public.companies WHERE name ILIKE '%ditra%'
 );
 
+-- ============================================================================
+-- L. TABEL PESANAN & TRANSAKSI PASOKAN MARKETPLACE (UMKM_ORDERS)
+-- Menghubungkan pesanan beli dari Pabrik Baja ke pemasok UMKM / Perusahaan Hijau
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.umkm_orders (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_number TEXT NOT NULL,
+  
+  -- Pihak Pembeli (Pabrik Baja)
+  buyer_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  buyer_company_id UUID REFERENCES public.companies(id) ON DELETE SET NULL,
+  buyer_name TEXT NOT NULL,
+  buyer_location TEXT,
+  
+  -- Pihak Penjual (UMKM / Perusahaan Hijau)
+  seller_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  seller_company_id UUID REFERENCES public.companies(id) ON DELETE SET NULL,
+  seller_name TEXT NOT NULL,
+  
+  -- Item Pasokan Scrap / Reduktor
+  supply_id UUID REFERENCES public.umkm_supplies(id) ON DELETE SET NULL,
+  item_title TEXT NOT NULL,
+  category TEXT NOT NULL,
+  order_volume_tons NUMERIC NOT NULL DEFAULT 0,
+  price_per_ton NUMERIC NOT NULL DEFAULT 0,
+  total_price NUMERIC NOT NULL DEFAULT 0,
+  estimated_co2_saved NUMERIC NOT NULL DEFAULT 0,
+  
+  -- Status Pemesanan
+  -- 'Menunggu Konfirmasi', 'Diproses', 'Dalam Pengiriman', 'Selesai', 'Ditolak'
+  status TEXT NOT NULL DEFAULT 'Menunggu Konfirmasi',
+  
+  -- Pengiriman & Dokumen
+  delivery_address TEXT,
+  delivery_order_number TEXT,
+  notes TEXT,
+  rejection_reason TEXT,
+  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Constraint status order
+DO $$ 
+BEGIN 
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'umkm_orders_status_check'
+  ) THEN 
+    ALTER TABLE public.umkm_orders 
+    ADD CONSTRAINT umkm_orders_status_check 
+    CHECK (status IN ('Menunggu Konfirmasi', 'Diproses', 'Dalam Pengiriman', 'Selesai', 'Ditolak'));
+  END IF; 
+END $$;
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE public.umkm_orders ENABLE ROW LEVEL SECURITY;
+
+-- Kebijakan Akses Keamanan (RLS):
+DROP POLICY IF EXISTS "Allow select on umkm_orders" ON public.umkm_orders;
+DROP POLICY IF EXISTS "Allow insert on umkm_orders" ON public.umkm_orders;
+DROP POLICY IF EXISTS "Allow update on umkm_orders" ON public.umkm_orders;
+DROP POLICY IF EXISTS "Allow delete on umkm_orders" ON public.umkm_orders;
+
+-- 1. Izin BACA: Pembeli (Pabrik Baja) dan Penjual (UMKM) dapat membaca pesanan
+CREATE POLICY "Allow select on umkm_orders"
+  ON public.umkm_orders FOR SELECT
+  USING (true);
+
+-- 2. Izin INSERT: Pabrik Baja dapat membuat pesanan / Purchase Order (PO) baru
+CREATE POLICY "Allow insert on umkm_orders"
+  ON public.umkm_orders FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+-- 3. Izin UPDATE: Penjual UMKM (proses/kirim) dan Pembeli dapat memperbarui status pesanan
+CREATE POLICY "Allow update on umkm_orders"
+  ON public.umkm_orders FOR UPDATE
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
+-- 4. Izin DELETE: Pembeli dapat membatalkan draf
+CREATE POLICY "Allow delete on umkm_orders"
+  ON public.umkm_orders FOR DELETE
+  TO authenticated
+  USING (true);
+
+
 

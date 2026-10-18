@@ -130,8 +130,21 @@ class _MarketPageState extends State<MarketPage> {
     },
   ];
 
+  String _selectedSourceType = 'Semua Sumber';
+  final List<String> _sourceTypes = [
+    'Semua Sumber',
+    'Mitra UMKM Scrap',
+    'Vendor Perusahaan Hijau',
+  ];
+
   List<Map<String, dynamic>> _allVendors = [];
+  List<Map<String, dynamic>> _myOrders = [];
   bool _isLoading = true;
+
+  String? _buyerUserId;
+  String? _buyerCompanyId;
+  String? _buyerCompanyName;
+  String? _buyerLocation;
 
   @override
   void initState() {
@@ -141,20 +154,110 @@ class _MarketPageState extends State<MarketPage> {
 
   Future<void> _fetchVendors() async {
     try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        _buyerUserId = user.id;
+        try {
+          final comp = await Supabase.instance.client
+              .from('companies')
+              .select('id, name, location')
+              .eq('user_id', user.id)
+              .maybeSingle();
+          if (comp != null) {
+            _buyerCompanyId = comp['id']?.toString();
+            _buyerCompanyName = comp['name']?.toString();
+            _buyerLocation = comp['location']?.toString();
+          }
+        } catch (e) {
+          debugPrint('Info query buyer company: $e');
+        }
+      }
+      if (_buyerCompanyName == null || _buyerCompanyName!.isEmpty) {
+        _buyerCompanyName = 'PT DITRA';
+        _buyerLocation = 'Cilegon, Banten';
+      }
+
+      // 1. Ambil pasokan riil secara dinamis dari tabel umkm_supplies
+      final List<Map<String, dynamic>> supplyCards = [];
+      try {
+        final suppliesRes = await Supabase.instance.client
+            .from('umkm_supplies')
+            .select()
+            .order('created_at', ascending: false);
+
+        final dbSupplies = List<Map<String, dynamic>>.from(suppliesRes);
+        for (final s in dbSupplies) {
+          final double ton = (num.tryParse(s['tonnage_available']?.toString() ?? '0') ?? 0).toDouble();
+          final double price = (num.tryParse(s['price_per_ton']?.toString() ?? '0') ?? 6800000).toDouble();
+          final double fe = (num.tryParse(s['fe_grade']?.toString() ?? '0') ?? 98.4).toDouble();
+          final double co2 = (num.tryParse(s['co2_saved_ton']?.toString() ?? '0') ?? 0).toDouble();
+          final double savingFactor = ton > 0 ? (co2 / ton) : 1.42;
+
+          supplyCards.add({
+            'id': s['id'],
+            'is_supply_item': true,
+            'supply_id': s['id'],
+            'seller_user_id': s['user_id'],
+            'seller_company_id': s['company_id'],
+            'seller_name': s['depo'] ?? 'Sentra Pengolahan UMKM',
+            'name': s['title'] ?? 'Pasokan Scrap EAF',
+            'category': s['category'] ?? 'Scrap HMS 1&2 (UMKM)',
+            'source_type': 'umkm',
+            'location': s['depo'] ?? 'Depo Pengepul & MRF',
+            'description':
+                'Pasokan riil sirkular dari depo mitra UMKM. Stok siap kirim: ${ton.toStringAsFixed(0)} ${s['unit'] ?? 'Ton'}, Kemurnian Fe: ${fe.toStringAsFixed(1)}%, Residu Cu: ${s['cu_impurity'] ?? '< 0.05%'}, Status: ${s['status'] ?? 'Siap Kirim'}.',
+            'info_label': 'Stok Pasokan & Harga',
+            'info_value':
+                '${NumberFormat('#,##0', 'id_ID').format(ton)} ${s['unit'] ?? 'Ton'} • Rp ${NumberFormat('#,##0', 'id_ID').format(price)}/Ton',
+            'verification_status': s['mrf_certified'] == true,
+            'badge_text': s['mrf_certified'] == true
+                ? 'UMKM Lolos Standar MRF'
+                : 'Pasokan Terverifikasi',
+            'badge_icon': 'recycling',
+            'icon_name': 'recycling',
+            'emission_saving_per_ton': savingFactor > 0 ? savingFactor : 1.42,
+            'mrf_purity_percent': fe > 0 ? fe : 98.4,
+            'energy_saving_kwh': 620.0,
+            'price_per_ton_rp': price,
+            'tonnage_available': ton > 0 ? ton : 1000.0,
+            'unit': s['unit'] ?? 'Ton',
+            'cu_impurity': s['cu_impurity'] ?? '< 0.05%',
+            'umkm_workers_supported': (ton * 0.12).round().clamp(20, 500),
+          });
+        }
+      } catch (e) {
+        debugPrint('Info query umkm_supplies: $e');
+      }
+
+      // 2. Ambil vendor dekarbonisasi dari green_vendor_markets
       final response = await Supabase.instance.client
           .from('green_vendor_markets')
           .select()
           .order('created_at', ascending: false);
 
-      final dbVendors = List<Map<String, dynamic>>.from(response);
-      // Gabungkan katalog kurasi UMKM Scrap spesifik dengan data Supabase (hindari duplikat nama)
-      final existingNames = dbVendors
-          .map((v) => (v['name'] ?? '').toString().toLowerCase())
-          .toSet();
+      final dbVendors = List<Map<String, dynamic>>.from(response).map((v) {
+        return {
+          ...v,
+          'source_type': 'vendor_hijau',
+        };
+      }).toList();
+
+      final existingNames = {
+        ...supplyCards.map((v) => (v['name'] ?? '').toString().toLowerCase()),
+        ...dbVendors.map((v) => (v['name'] ?? '').toString().toLowerCase()),
+      };
+
+      final curatedFiltered = _curatedUmkmVendors
+          .where((c) => !existingNames.contains(c['name'].toString().toLowerCase()))
+          .map((c) => {
+                ...c,
+                'source_type': c['category'].toString().contains('UMKM') ? 'umkm' : 'vendor_hijau',
+              })
+          .toList();
+
       final merged = [
-        ..._curatedUmkmVendors.where(
-          (c) => !existingNames.contains(c['name'].toString().toLowerCase()),
-        ),
+        ...supplyCards,
+        ...curatedFiltered,
         ...dbVendors,
       ];
 
@@ -164,6 +267,9 @@ class _MarketPageState extends State<MarketPage> {
           _isLoading = false;
         });
       }
+
+      // Ambil daftar riwayat pesanan (PO) pembeli
+      _fetchBuyerOrders();
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -171,7 +277,24 @@ class _MarketPageState extends State<MarketPage> {
           _isLoading = false;
         });
       }
-      debugPrint('Error fetching vendors (using curated UMKM fallback): $e');
+      debugPrint('Error fetching vendors: $e');
+    }
+  }
+
+  Future<void> _fetchBuyerOrders() async {
+    try {
+      final res = await Supabase.instance.client
+          .from('umkm_orders')
+          .select()
+          .order('created_at', ascending: false);
+      final allOrders = List<Map<String, dynamic>>.from(res);
+      if (mounted) {
+        setState(() {
+          _myOrders = allOrders;
+        });
+      }
+    } catch (e) {
+      debugPrint('Info fetching buyer orders: $e');
     }
   }
 
@@ -229,6 +352,604 @@ class _MarketPageState extends State<MarketPage> {
   }
 
   // ===========================================================================
+  // SUBMIT PURCHASE ORDER (PO) KE SUPABASE & BUKA DIALOG SUKSES
+  // ===========================================================================
+  Future<void> _submitPurchaseOrder({
+    required BuildContext modalCtx,
+    required Map<String, dynamic> vendor,
+    required double volumeTon,
+    required double savingPerTon,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final unitPrice = (vendor['price_per_ton_rp'] as num?)?.toDouble() ?? 6800000.0;
+    final totalPrice = volumeTon * unitPrice;
+    final totalCo2Reduced = volumeTon * savingPerTon;
+    final orderNo = 'PO-BAJA-${DateTime.now().millisecondsSinceEpoch.toString().substring(6)}';
+
+    try {
+      final newOrder = <String, dynamic>{
+        'order_number': orderNo,
+        'buyer_user_id': ?_buyerUserId,
+        'buyer_company_id': ?_buyerCompanyId,
+        'buyer_name': _buyerCompanyName ?? 'PT DITRA',
+        'buyer_location': _buyerLocation ?? 'Cilegon, Banten',
+        'seller_user_id': ?(vendor['seller_user_id']?.toString()),
+        'seller_company_id': ?(vendor['seller_company_id']?.toString()),
+        'seller_name': vendor['seller_name'] ?? vendor['name'] ?? 'Mitra UMKM Scrap',
+        'supply_id': ?(vendor['supply_id']?.toString()),
+        'item_title': vendor['name'] ?? 'Pasokan Scrap EAF',
+        'category': vendor['category'] ?? 'Scrap HMS 1&2',
+        'order_volume_tons': volumeTon,
+        'price_per_ton': unitPrice,
+        'total_price': totalPrice,
+        'estimated_co2_saved': totalCo2Reduced,
+        'status': 'Menunggu Konfirmasi',
+        'delivery_address': 'Pabrik Peleburan EAF Baja Cilegon - Dermaga & Gudang Logistik Scrap',
+        'notes': 'Purchase Order pasokan bahan baku sirkular untuk pemenuhan target 52% scrap EAF.',
+      };
+
+      await Supabase.instance.client.from('umkm_orders').insert(newOrder);
+      await _fetchBuyerOrders();
+
+      if (!modalCtx.mounted) return;
+      Navigator.pop(modalCtx);
+
+      if (!mounted) return;
+      _showOrderSuccessDialog(
+        orderNo: orderNo,
+        itemTitle: vendor['name'] ?? 'Pasokan Scrap EAF',
+        sellerName: vendor['seller_name'] ?? vendor['name'] ?? 'Mitra Pemasok UMKM',
+        volumeTon: volumeTon,
+        totalPrice: totalPrice,
+        co2Saved: totalCo2Reduced,
+      );
+    } catch (e) {
+      debugPrint('Error submit order: $e');
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Gagal menerbitkan Purchase Order: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _showOrderSuccessDialog({
+    required String orderNo,
+    required String itemTitle,
+    required String sellerName,
+    required double volumeTon,
+    required double totalPrice,
+    required double co2Saved,
+  }) {
+    final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final numberFormatter = NumberFormat.decimalPattern('id_ID');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFECFDF5),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check_circle_rounded, color: Color(0xFF059669), size: 36),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'PO Berhasil Diterbitkan!',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'No. PO: $orderNo',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF059669)),
+              ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  children: [
+                    _buildDialogReceiptRow('Item Pasokan:', itemTitle),
+                    const SizedBox(height: 6),
+                    _buildDialogReceiptRow('Mitra Pemasok:', sellerName),
+                    const SizedBox(height: 6),
+                    _buildDialogReceiptRow('Volume Pasokan:', '${numberFormatter.format(volumeTon.round())} Ton'),
+                    const SizedBox(height: 6),
+                    _buildDialogReceiptRow('Total Nilai PO:', currencyFormatter.format(totalPrice)),
+                    const SizedBox(height: 6),
+                    _buildDialogReceiptRow('Potensi Reduksi:', '-${numberFormatter.format(co2Saved.round())} tCO2e'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Pesanan telah terkirim otomatis ke portal UMKM di menu Permintaan untuk diverifikasi dan diterbitkan Surat Jalan (DO).',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 11, color: Color(0xFF64748B), height: 1.35),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Tutup', style: TextStyle(color: Color(0xFF64748B))),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _showBuyerOrderHistorySheet();
+            },
+            icon: const Icon(Icons.shopping_basket_outlined, size: 16),
+            label: const Text('Buka Keranjang PO', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF059669),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDialogReceiptRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ===========================================================================
+  // KERANJANG & RIWAYAT PESANAN (PO) PEMBELI PABRIK BAJA
+  // ===========================================================================
+  void _showBuyerOrderHistorySheet() {
+    final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final numberFormatter = NumberFormat.decimalPattern('id_ID');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final double totalPoValue = _myOrders.fold<double>(
+              0,
+              (sum, o) => sum + (num.tryParse(o['total_price']?.toString() ?? '0') ?? 0).toDouble(),
+            );
+            final double totalTonnage = _myOrders.fold<double>(
+              0,
+              (sum, o) => sum + (num.tryParse(o['order_volume_tons']?.toString() ?? '0') ?? 0).toDouble(),
+            );
+            final double totalCo2Saved = _myOrders.fold<double>(
+              0,
+              (sum, o) => sum + (num.tryParse(o['estimated_co2_saved']?.toString() ?? '0') ?? 0).toDouble(),
+            );
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD1D5DB),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Keranjang & Riwayat PO Pembelian',
+                              style: TextStyle(
+                                fontSize: 16.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0F172A),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Pesanan Pasokan Scrap ke UMKM & Vendor Hijau',
+                              style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B)),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Hero Summary Mini
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF059669), Color(0xFF047857)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Total Belanja PO', style: TextStyle(fontSize: 10, color: Colors.white70)),
+                              const SizedBox(height: 2),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  currencyFormatter.format(totalPoValue),
+                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(width: 1, height: 28, color: Colors.white24),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const Text('Total Pasokan', style: TextStyle(fontSize: 10, color: Colors.white70)),
+                              const SizedBox(height: 2),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  '${numberFormatter.format(totalTonnage.round())} Ton',
+                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(width: 1, height: 28, color: Colors.white24),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text('Reduksi CO2e', style: TextStyle(fontSize: 10, color: Colors.white70)),
+                              const SizedBox(height: 2),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  '-${numberFormatter.format(totalCo2Saved.round())} tCO2e',
+                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Daftar Pesanan
+                  Expanded(
+                    child: _myOrders.isEmpty
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24.0),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFF1F5F9),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.shopping_basket_outlined,
+                                      size: 36,
+                                      color: Color(0xFF94A3B8),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    'Belum Ada Purchase Order (PO)',
+                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    'Pilih bahan baku sirkular scrap dari UMKM di bursa marketplace dan ajukan kontrak pasok untuk menerbitkan PO.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : ListView.separated(
+                            itemCount: _myOrders.length,
+                            separatorBuilder: (context, index) => const SizedBox(height: 10),
+                            itemBuilder: (context, index) {
+                              final order = _myOrders[index];
+                              return _buildBuyerOrderCard(order);
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildBuyerOrderCard(Map<String, dynamic> order) {
+    final currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final numberFormatter = NumberFormat.decimalPattern('id_ID');
+
+    final status = order['status']?.toString() ?? 'Menunggu Konfirmasi';
+    final doNum = order['delivery_order_number']?.toString();
+    final rejectReason = order['rejection_reason']?.toString();
+
+    Color statusColor;
+    Color statusBg;
+    IconData statusIcon;
+
+    switch (status) {
+      case 'Diproses':
+        statusColor = const Color(0xFF0284C7);
+        statusBg = const Color(0xFFE0F2FE);
+        statusIcon = Icons.hourglass_top_rounded;
+        break;
+      case 'Dalam Pengiriman':
+        statusColor = const Color(0xFF4F46E5);
+        statusBg = const Color(0xFFEEF2FF);
+        statusIcon = Icons.local_shipping_outlined;
+        break;
+      case 'Selesai':
+        statusColor = const Color(0xFF16A34A);
+        statusBg = const Color(0xFFDCFCE7);
+        statusIcon = Icons.check_circle_outline_rounded;
+        break;
+      case 'Ditolak':
+        statusColor = const Color(0xFFDC2626);
+        statusBg = const Color(0xFFFEE2E2);
+        statusIcon = Icons.cancel_outlined;
+        break;
+      default:
+        statusColor = const Color(0xFFD97706);
+        statusBg = const Color(0xFFFEF3C7);
+        statusIcon = Icons.schedule_rounded;
+    }
+
+    final double vol = (num.tryParse(order['order_volume_tons']?.toString() ?? '0') ?? 0).toDouble();
+    final double price = (num.tryParse(order['total_price']?.toString() ?? '0') ?? 0).toDouble();
+    final double co2 = (num.tryParse(order['estimated_co2_saved']?.toString() ?? '0') ?? 0).toDouble();
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  order['order_number'] ?? 'PO-BAJA',
+                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF059669)),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                decoration: BoxDecoration(
+                  color: statusBg,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(statusIcon, size: 11, color: statusColor),
+                    const SizedBox(width: 4),
+                    Text(
+                      status,
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            order['item_title'] ?? 'Pasokan Scrap EAF',
+            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Mitra Pemasok: ${order['seller_name'] ?? 'Pengepul / Depo UMKM'}',
+            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Volume Pasok', style: TextStyle(fontSize: 9.5, color: Color(0xFF64748B))),
+                      Text(
+                        '${numberFormatter.format(vol.round())} Ton',
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Text('Total Nilai PO', style: TextStyle(fontSize: 9.5, color: Color(0xFF64748B))),
+                      Text(
+                        currencyFormatter.format(price),
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF059669)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text('Reduksi Emisi', style: TextStyle(fontSize: 9.5, color: Color(0xFF64748B))),
+                      Text(
+                        '-${numberFormatter.format(co2.round())} tCO2e',
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (doNum != null && doNum.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEEF2FF),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFC7D2FE)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.local_shipping_rounded, size: 14, color: Color(0xFF4F46E5)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Surat Jalan / DO: $doNum (Dalam Perjalanan Logistik)',
+                      style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (rejectReason != null && rejectReason.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEE2E2),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFFECACA)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline_rounded, size: 14, color: Color(0xFFDC2626)),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Alasan Ditolak: $rejectReason',
+                      style: const TextStyle(fontSize: 10.5, color: Color(0xFFDC2626)),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================================
   // MODAL SIMULASI ESTIMASI DAMPAK EMISI, MRF & PENGHEMATAN PAJAK CBAM (LANGKAH 3)
   // ===========================================================================
   void _showEmissionImpactSheet(Map<String, dynamic> vendor) {
@@ -239,6 +960,7 @@ class _MarketPageState extends State<MarketPage> {
     final int baseWorkers = _getWorkersSupported(vendor);
     final String title = vendor['name'] ?? 'Mitra UMKM / Vendor Hijau';
     final String category = vendor['category'] ?? 'Bahan Baku Sirkular (UMKM)';
+    final double unitPrice = (vendor['price_per_ton_rp'] as num?)?.toDouble() ?? 6800000.0;
 
     final currencyFormatter = NumberFormat.currency(
       locale: 'id_ID',
@@ -257,6 +979,7 @@ class _MarketPageState extends State<MarketPage> {
             final double totalCo2Reduced = volumeTon * savingPerTon;
             final double cleanScrapOutput = volumeTon * (mrfPurity / 100.0);
             final double totalMwhSaved = (volumeTon * kwhPerTon) / 1000.0;
+            final double totalPrice = volumeTon * unitPrice;
             // Asumsi tarif denda CBAM EU €60 (~Rp 1.050.000 / ton CO2e)
             final double cbamPenaltySavedRp = totalCo2Reduced * 1050000;
             // Pajak karbon domestik UU HPP No. 7/2021 (Rp 30.000 / ton CO2e)
@@ -325,6 +1048,8 @@ class _MarketPageState extends State<MarketPage> {
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF111827),
                                 ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               Text(
                                 category,
@@ -555,12 +1280,15 @@ class _MarketPageState extends State<MarketPage> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Text(
-                                '${eafScrapTargetCoverage.toStringAsFixed(1)}% Terpenuhi',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0284C7),
+                              Flexible(
+                                child: Text(
+                                  '${eafScrapTargetCoverage.toStringAsFixed(1)}% Terpenuhi',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF0284C7),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
@@ -568,21 +1296,68 @@ class _MarketPageState extends State<MarketPage> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 12),
+
+                    // Ringkasan Nilai Transaksi Purchase Order (PO)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFA7F3D0)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'ESTIMASI NILAI PURCHASE ORDER (PO):',
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF065F46),
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Harga: ${currencyFormatter.format(unitPrice)} / Ton',
+                                  style: const TextStyle(fontSize: 11, color: Color(0xFF047857)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              currencyFormatter.format(totalPrice),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF059669),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 16),
 
+                    // Tombol Aksi Penerbitan Purchase Order (PO)
                     SizedBox(
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(this.context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Permintaan pasok ${numberFormatter.format(volumeTon.round())} Ton ke $title berhasil dicatat (Potensi reduksi -${numberFormatter.format(totalCo2Reduced.round())} tCO2e)!',
-                              ),
-                              backgroundColor: const Color(0xFF059669),
-                            ),
+                          _submitPurchaseOrder(
+                            modalCtx: context,
+                            vendor: vendor,
+                            volumeTon: volumeTon,
+                            savingPerTon: savingPerTon,
                           );
                         },
                         style: ElevatedButton.styleFrom(
@@ -592,12 +1367,15 @@ class _MarketPageState extends State<MarketPage> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        icon: const Icon(Icons.verified_outlined, size: 18),
-                        label: const Text(
-                          'Ajukan Kontrak Pasok & Klaim Sertifikat Reduksi',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                        icon: const Icon(Icons.shopping_cart_checkout_rounded, size: 18),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'Konfirmasi & Terbitkan Purchase Order (PO)',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                       ),
@@ -670,7 +1448,7 @@ class _MarketPageState extends State<MarketPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Filter logic pintar (mendukung pencocokan sub-kategori UMKM Scrap)
+    // Filter logic pintar (mendukung filter Sumber: UMKM vs Vendor Hijau & Sub-kategori Scrap)
     final filteredVendors = _allVendors.where((vendor) {
       final nameStr = (vendor['name'] ?? '').toString().toLowerCase();
       final descStr = (vendor['description'] ?? '').toString().toLowerCase();
@@ -690,7 +1468,17 @@ class _MarketPageState extends State<MarketPage> {
         matchesCategory = catStr == _selectedCategory;
       }
 
-      return matchesSearch && matchesCategory;
+      bool matchesSource = true;
+      if (_selectedSourceType == 'Mitra UMKM Scrap') {
+        matchesSource = (vendor['source_type'] == 'umkm') ||
+            catStr.contains('UMKM') ||
+            catStr.contains('Scrap');
+      } else if (_selectedSourceType == 'Vendor Perusahaan Hijau') {
+        matchesSource = (vendor['source_type'] == 'vendor_hijau') ||
+            (!catStr.contains('UMKM') && !catStr.contains('Scrap'));
+      }
+
+      return matchesSearch && matchesCategory && matchesSource;
     }).toList();
 
     return Scaffold(
@@ -717,13 +1505,28 @@ class _MarketPageState extends State<MarketPage> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.shopping_basket_outlined,
-              color: Color(0xFF4B5563),
+          Badge(
+            isLabelVisible: _myOrders.isNotEmpty,
+            label: Text(
+              '${_myOrders.length}',
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
-            onPressed: () {},
+            backgroundColor: const Color(0xFF059669),
+            alignment: const AlignmentDirectional(20, -10),
+            child: IconButton(
+              icon: const Icon(
+                Icons.shopping_basket_outlined,
+                color: Color(0xFF4B5563),
+              ),
+              tooltip: 'Keranjang & Riwayat PO Pembelian',
+              onPressed: _showBuyerOrderHistorySheet,
+            ),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: _isLoading
@@ -820,6 +1623,73 @@ class _MarketPageState extends State<MarketPage> {
                       ),
                     ),
                     const SizedBox(height: 16),
+
+                    // Segmented Filter Sumber Transaksi: UMKM vs Perusahaan Hijau
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: _sourceTypes.map((source) {
+                          final bool isSelected = _selectedSourceType == source;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: InkWell(
+                              onTap: () {
+                                setState(() => _selectedSourceType = source);
+                              },
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? const Color(0xFF059669)
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? const Color(0xFF059669)
+                                        : const Color(0xFFE2E8F0),
+                                    width: 1.2,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      source.contains('UMKM')
+                                          ? Icons.recycling_rounded
+                                          : (source.contains('Hijau')
+                                              ? Icons.eco_rounded
+                                              : Icons.hub_rounded),
+                                      size: 14,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : const Color(0xFF059669),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      source,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.w600,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : const Color(0xFF334155),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
 
                     // Categories (Termasuk Kategori UMKM Scrap Spesifik)
                     SingleChildScrollView(
@@ -1199,9 +2069,7 @@ class _MarketPageState extends State<MarketPage> {
                 child: ElevatedButton(
                   onPressed: () => _showEmissionImpactSheet(vendor),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isVerified
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFF4F46E5),
+                    backgroundColor: const Color(0xFF059669),
                     foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(
@@ -1217,10 +2085,10 @@ class _MarketPageState extends State<MarketPage> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.handshake_outlined, size: 16),
+                        const Icon(Icons.shopping_bag_outlined, size: 16),
                         const SizedBox(width: 5),
                         Text(
-                          isVerified ? 'Hubungi UMKM' : 'Ajukan Kontrak',
+                          isVerified ? 'Pesan / Ajukan PO' : 'Ajukan Kontrak PO',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 11.5,
