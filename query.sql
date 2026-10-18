@@ -902,4 +902,156 @@ WHERE role = 'perusahaan_hijau' AND (is_verified IS NULL OR is_verified = false)
 -- JOIN public.companies c ON s.company_id = c.id
 -- WHERE c.company_type = 'perusahaan_hijau'
 --   AND s.status != 'Habis Terjual'
--- ORDER BY s.created_at DESC;
+-- ORDER BY s.created_at DESC;
+
+-- ============================================================================
+-- J. TABEL KEMITRAAN & KONTRAK PASOKAN SIRKULAR (UMKM & PERUSAHAAN HIJAU)
+-- ============================================================================
+-- Menyimpan kontrak kemitraan jangka panjang (Offtake Agreement / MOU) antara 
+-- UMKM / Perusahaan Hijau dengan Pabrik Baja (Offtaker) untuk kepastian pasokan
+-- scrap EAF 52% dan dekarbonisasi industri baja nasional.
+CREATE TABLE IF NOT EXISTS public.umkm_partnerships (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  company_id UUID REFERENCES public.companies(id) ON DELETE CASCADE,
+  factory_company_id UUID REFERENCES public.companies(id) ON DELETE SET NULL,
+  factory_name TEXT NOT NULL,
+  contract_number TEXT NOT NULL,
+  contract_type TEXT NOT NULL DEFAULT 'Offtake Pasokan Rutin (Kontrak 6 Bulan)',
+  material_type TEXT NOT NULL,
+  target_volume_tons NUMERIC NOT NULL DEFAULT 0,
+  fulfilled_volume_tons NUMERIC NOT NULL DEFAULT 0,
+  price_per_ton NUMERIC NOT NULL DEFAULT 0,
+  total_contract_value NUMERIC NOT NULL DEFAULT 0,
+  start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  end_date DATE NOT NULL DEFAULT (CURRENT_DATE + INTERVAL '6 months'),
+  status TEXT NOT NULL DEFAULT 'Aktif',
+  esg_support_program TEXT DEFAULT 'Fasilitas Uji Lab Spektrometer & Bantuan Baler Pres MRF',
+  co2_reduction_claimed NUMERIC DEFAULT 0,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Script Migrasi jika tabel umkm_partnerships sudah dibuat sebelumnya:
+ALTER TABLE public.umkm_partnerships 
+  ADD COLUMN IF NOT EXISTS factory_company_id UUID REFERENCES public.companies(id) ON DELETE SET NULL;
+
+-- Constraint status kemitraan
+DO $$ 
+BEGIN 
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'umkm_partnerships_status_check'
+  ) THEN 
+    ALTER TABLE public.umkm_partnerships 
+    ADD CONSTRAINT umkm_partnerships_status_check 
+    CHECK (status IN ('Aktif', 'Menunggu Persetujuan', 'Selesai', 'Dibatalkan', 'Draf'));
+  END IF; 
+END $$;
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE public.umkm_partnerships ENABLE ROW LEVEL SECURITY;
+
+-- Kebijakan Akses Keamanan (RLS):
+DROP POLICY IF EXISTS "Allow select on umkm_partnerships" ON public.umkm_partnerships;
+DROP POLICY IF EXISTS "Allow insert on umkm_partnerships" ON public.umkm_partnerships;
+DROP POLICY IF EXISTS "Allow update on umkm_partnerships" ON public.umkm_partnerships;
+DROP POLICY IF EXISTS "Allow delete on umkm_partnerships" ON public.umkm_partnerships;
+
+-- 1. Izin BACA: User hanya membaca kontrak kemitraan miliknya sendiri (atau seluruh pengguna terautentikasi jika relevan)
+CREATE POLICY "Allow select on umkm_partnerships"
+  ON public.umkm_partnerships FOR SELECT
+  USING (
+    user_id = auth.uid() 
+    OR user_id IS NULL 
+    OR auth.role() = 'authenticated'
+  );
+
+-- 2. Izin INSERT: Pemasok Hijau dapat mengajukan permohonan kemitraan baru
+CREATE POLICY "Allow insert on umkm_partnerships"
+  ON public.umkm_partnerships FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    user_id = auth.uid() OR user_id IS NULL
+  );
+
+-- 3. Izin UPDATE: Pemasok dapat mengupdate realisasi kiriman atau status kemitraannya
+CREATE POLICY "Allow update on umkm_partnerships"
+  ON public.umkm_partnerships FOR UPDATE
+  TO authenticated
+  USING (
+    user_id = auth.uid() OR user_id IS NULL
+  )
+  WITH CHECK (
+    user_id = auth.uid() OR user_id IS NULL
+  );
+
+-- 4. Izin DELETE: Pemasok dapat menghapus draf permohonan kemitraannya
+CREATE POLICY "Allow delete on umkm_partnerships"
+  ON public.umkm_partnerships FOR DELETE
+  TO authenticated
+  USING (
+    user_id = auth.uid()
+  );
+
+-- ============================================================================
+-- K. PERBAIKAN RLS TABEL COMPANIES (MEMBUKA BACA OFFTAKER PABRIK BAJA & ENTRY PT DITRA)
+-- Jalankan skrip ini di Supabase Dashboard -> SQL Editor -> Run
+-- ============================================================================
+
+-- 1. Pastikan RLS aktif di public.companies
+ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
+
+-- 2. Hapus seluruh policy lama yang memblokir hak baca antar entitas
+DROP POLICY IF EXISTS "Users can manage their own company" ON public.companies;
+DROP POLICY IF EXISTS "Companies viewable by authenticated users" ON public.companies;
+DROP POLICY IF EXISTS "Allow authenticated read on companies" ON public.companies;
+DROP POLICY IF EXISTS "Allow read all companies" ON public.companies;
+DROP POLICY IF EXISTS "Companies viewable by all" ON public.companies;
+
+-- 3. Policy SELECT BARU: Buka izin baca (SELECT) tabel companies ke semua pengguna (termasuk UMKM)
+-- agar saat login sebagai UMKM/Perusahaan Hijau, aplikasi dapat membaca daftar Pabrik Baja mitra (Offtaker EAF)
+CREATE POLICY "Companies viewable by all" 
+ON public.companies 
+FOR SELECT 
+USING (true);
+
+-- 4. Policy INSERT: Pengguna hanya mendaftarkan profilnya sendiri
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.companies;
+CREATE POLICY "Users can insert their own profile" 
+ON public.companies 
+FOR INSERT 
+TO authenticated 
+WITH CHECK (auth.uid() = user_id OR user_id IS NULL);
+
+-- 5. Policy UPDATE: Pengguna mengubah profil miliknya sendiri, atau Pemerintah mengubah semua
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.companies;
+DROP POLICY IF EXISTS "Users update own or Pemerintah updates all" ON public.companies;
+CREATE POLICY "Users update own or Pemerintah updates all" 
+ON public.companies 
+FOR UPDATE 
+TO authenticated 
+USING (
+  auth.uid() = user_id 
+  OR EXISTS (
+    SELECT 1 FROM public.companies c 
+    WHERE c.user_id = auth.uid() 
+      AND (c.role ILIKE '%pemerintah%' OR c.role ILIKE '%regulator%' OR c.role ILIKE '%admin%')
+  )
+)
+WITH CHECK (
+  auth.uid() = user_id 
+  OR EXISTS (
+    SELECT 1 FROM public.companies c 
+    WHERE c.user_id = auth.uid() 
+      AND (c.role ILIKE '%pemerintah%' OR c.role ILIKE '%regulator%' OR c.role ILIKE '%admin%')
+  )
+);
+
+-- 6. Daftarkan PT DITRA sebagai Pabrik Baja Utama di tabel companies jika belum tercatat
+INSERT INTO public.companies (name, siinas_id, role, company_type, location, carbon_intensity)
+SELECT 'PT DITRA', 'SIINAS #DTR-099', 'perusahaan_baja', 'perusahaan_baja', 'Cilegon, Banten', 0.72
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.companies WHERE name ILIKE '%ditra%'
+);
+
+
