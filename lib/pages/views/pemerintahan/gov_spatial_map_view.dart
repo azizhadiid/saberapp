@@ -193,7 +193,7 @@ class _GovSpatialMapViewState extends State<GovSpatialMapView> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryPurple = Color(0xFF4338CA);
+    const primaryPurple = Color(0xFF059669);
 
     // Filter regional provinsi
     final filteredProvinces = _selectedRegionFilter == 'Semua Wilayah'
@@ -274,9 +274,9 @@ class _GovSpatialMapViewState extends State<GovSpatialMapView> {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: const Color(0xFFEEF2FF),
+                color: const Color(0xFFECFDF5),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFC7D2FE)),
+                border: Border.all(color: const Color(0xFFA7F3D0)),
               ),
               child: Image.asset(
                 'assets/img/logo.png',
@@ -552,7 +552,7 @@ class _GovSpatialMapViewState extends State<GovSpatialMapView> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFEEF2FF),
+                              color: const Color(0xFFECFDF5),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(Icons.factory, size: 18, color: primaryPurple),

@@ -253,7 +253,7 @@ class _MainContainerState extends State<MainContainer> {
   /// 3. LAYOUT PEMERINTAH (REGULATOR & AUDITOR MRV)
   /// ==========================================================================
   Widget _buildGovernmentScaffold(bool isKeyboardVisible) {
-    const primaryGov = Color(0xFF4338CA); // Deep Indigo / Royal Purple
+    const primaryGov = Color(0xFF059669); // Emerald Green Pemerintah
 
     return Scaffold(
       body: _screens[_navIndex],

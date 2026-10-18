@@ -96,6 +96,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ? _namaCtrl.text.trim()
             : (user.userMetadata?['company_name'] ??
                   user.userMetadata?['full_name'] ??
+                  user.email?.split('@').first ??
                   'Entitas Terdaftar'),
         'siinas_id': _industriCtrl.text.trim().isNotEmpty
             ? _industriCtrl.text.trim()
@@ -109,6 +110,15 @@ class _RegisterPageState extends State<RegisterPage> {
     } catch (e) {
       debugPrint('Error direct save company record: $e');
     }
+  }
+
+  String _normalizeRole(String role) {
+    final r = role.toLowerCase().trim();
+    if (r.contains('pemerintah')) return 'pemerintah';
+    if (r.contains('hijau') || r.contains('umkm') || r.contains('green')) {
+      return 'perusahaan_hijau';
+    }
+    return 'perusahaan_baja';
   }
 
   Future<void> _doRegister() async {
@@ -149,6 +159,67 @@ class _RegisterPageState extends State<RegisterPage> {
         },
       );
 
+      // Cek apakah akun sebenarnya sudah pernah terdaftar (Supabase email enumeration protection: identities kosong)
+      if (res.user != null && (res.user!.identities?.isEmpty ?? false)) {
+        await Supabase.instance.client.auth.signOut();
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              icon: const Icon(
+                Icons.gpp_bad_rounded,
+                color: Color(0xFFDC2626),
+                size: 44,
+              ),
+              title: const Text(
+                'Pendaftaran Ditolak!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              content: Text(
+                'Email "${_emailCtrl.text.trim()}" sudah terdaftar di sistem SaberKarbon.\n\n'
+                'Anda tidak dapat mendaftar ulang. Silakan langsung masuk melalui halaman login.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF475569),
+                  height: 1.45,
+                ),
+              ),
+              actionsAlignment: MainAxisAlignment.center,
+              actions: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginPage()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF059669),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text('Ke Halaman Masuk'),
+                ),
+              ],
+            ),
+          );
+        }
+        return;
+      }
+
       if (res.user != null) {
         // Tulis langsung ke database companies agar role tersimpan permanen
         await _saveCompanyRecord(res.user!, _selectedRole);
@@ -183,14 +254,62 @@ class _RegisterPageState extends State<RegisterPage> {
       }
     } on AuthException catch (error) {
       String pesan = 'Terjadi kesalahan saat pendaftaran: ${error.message}';
-      if (error.message.contains('User already registered')) {
-        pesan = 'Email ini sudah terdaftar. Silakan langsung masuk (login).';
+      if (error.message.toLowerCase().contains('already registered') ||
+          error.message.toLowerCase().contains('already exists') ||
+          error.statusCode == '422') {
+        pesan = 'Email ini sudah terdaftar di sistem. Silakan langsung masuk melalui halaman login.';
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(pesan),
-            backgroundColor: const Color(0xFFDC2626),
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            icon: const Icon(
+              Icons.gpp_bad_rounded,
+              color: Color(0xFFDC2626),
+              size: 44,
+            ),
+            title: const Text(
+              'Pendaftaran Ditolak!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+            content: Text(
+              pesan,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF475569),
+                height: 1.45,
+              ),
+            ),
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF059669),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text('Ke Halaman Masuk'),
+              ),
+            ],
           ),
         );
       }
@@ -232,9 +351,172 @@ class _RegisterPageState extends State<RegisterPage> {
         idToken: idToken,
       );
 
-      if (res.user != null) {
-        await _saveCompanyRecord(res.user!, _selectedRole);
+      final user = res.user;
+      if (user == null) throw 'Gagal mendapatkan data akun dari Google.';
+
+      // Cek apakah akun ini SUDAH ADA di database (di tabel companies atau user metadata)
+      final companyRes = await Supabase.instance.client
+          .from('companies')
+          .select('role, name')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      String? registeredRole;
+      if (companyRes != null && companyRes['role'] != null) {
+        registeredRole = _normalizeRole(companyRes['role'] as String);
+      } else if (user.userMetadata?['user_role'] != null) {
+        registeredRole = _normalizeRole(user.userMetadata!['user_role'] as String);
       }
+
+      final normalizedChosenRole = _normalizeRole(_selectedRole);
+
+      // 1. JIKA AKUN SUDAH ADA / PERNAH TERDAFTAR -> DITOLAK
+      if (registeredRole != null) {
+        // Sign out agar sesi login dibatalkan
+        await Supabase.instance.client.auth.signOut();
+
+        if (!mounted) return;
+
+        final registeredName = _getRoleDisplayName(registeredRole);
+        final chosenName = _getRoleDisplayName(normalizedChosenRole);
+
+        // Sub-kasus 1A: Mendaftar dengan role yang BERBEDA
+        if (registeredRole != normalizedChosenRole) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              icon: const Icon(
+                Icons.gpp_bad_rounded,
+                color: Color(0xFFDC2626),
+                size: 44,
+              ),
+              title: const Text(
+                'Pendaftaran Ditolak!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              content: Text(
+                'Akun Google Anda (${user.email}) sudah terdaftar sebagai "$registeredName".\n\n'
+                'Anda tidak dapat mendaftar kembali dengan peran yang berbeda ("$chosenName"). '
+                'Silakan langsung masuk (login) melalui portal "$registeredName".',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF475569),
+                  height: 1.45,
+                ),
+              ),
+              actionsAlignment: MainAxisAlignment.center,
+              actions: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginPage()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDC2626),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 10,
+                    ),
+                  ),
+                  child: Text('Ke Portal Masuk $registeredName'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          // Sub-kasus 1B: Mendaftar dengan role yang SAMA (akun sudah ada) -> Ditolak karena sudah terdaftar
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              icon: const Icon(
+                Icons.account_circle_outlined,
+                color: Color(0xFFD97706),
+                size: 44,
+              ),
+              title: const Text(
+                'Akun Sudah Terdaftar!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              content: Text(
+                'Akun Google Anda (${user.email}) sudah pernah terdaftar sebagai "$registeredName".\n\n'
+                'Anda tidak perlu mendaftar ulang. Silakan langsung masuk (login) menggunakan akun ini.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF475569),
+                  height: 1.45,
+                ),
+              ),
+              actionsAlignment: MainAxisAlignment.center,
+              actions: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const LoginPage()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF059669),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 10,
+                    ),
+                  ),
+                  child: const Text('Langsung Masuk (Login)'),
+                ),
+              ],
+            ),
+          );
+        }
+        return;
+      }
+
+      // 2. JIKA AKUN BELUM ADA -> DAFTARKAN & OTOMATIS LANGSUNG MASUK KE HALAMAN
+      await _saveCompanyRecord(user, normalizedChosenRole);
+
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MainContainer(
+            initialIndex: _getTargetIndexForRole(normalizedChosenRole),
+            userRole: _getRoleDisplayName(normalizedChosenRole),
+          ),
+        ),
+        (route) => false,
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

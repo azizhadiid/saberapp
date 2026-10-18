@@ -16,8 +16,8 @@ class PolicyBriefReaderPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primaryIndigo = Color(0xFF3730A3);
-    const darkNavy = Color(0xFF1E1B4B);
+    const primaryIndigo = Color(0xFF059669);
+    const darkNavy = Color(0xFF064E3B);
 
     final double educationBudget = budgetSplit * 1.8;
     final double umkmBudget = (100 - budgetSplit) * 1.8;
@@ -111,9 +111,9 @@ class PolicyBriefReaderPage extends StatelessWidget {
                       height: 50,
                       margin: const EdgeInsets.only(right: 12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEEF2FF),
+                        color: const Color(0xFFECFDF5),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFC7D2FE)),
+                        border: Border.all(color: const Color(0xFFA7F3D0)),
                       ),
                       child: Image.asset(
                         'assets/img/logo.png',
@@ -405,9 +405,9 @@ class PolicyBriefReaderPage extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEEF2FF),
+                    color: const Color(0xFFECFDF5),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFC7D2FE)),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -574,7 +574,7 @@ class PolicyBriefReaderPage extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFEEF2FF),
+        color: const Color(0xFFECFDF5),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
@@ -582,7 +582,7 @@ class PolicyBriefReaderPage extends StatelessWidget {
         style: const TextStyle(
           fontSize: 10.5,
           fontWeight: FontWeight.bold,
-          color: Color(0xFF312E81),
+          color: Color(0xFF065F46),
         ),
       ),
     );
@@ -669,7 +669,7 @@ class PolicyBriefReaderPage extends StatelessWidget {
           width: 18,
           height: 18,
           decoration: const BoxDecoration(
-            color: Color(0xFF312E81),
+            color: Color(0xFF065F46),
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,

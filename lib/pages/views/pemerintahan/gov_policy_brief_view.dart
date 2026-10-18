@@ -36,7 +36,7 @@ class _GovPolicyBriefViewState extends State<GovPolicyBriefView> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
-            Icon(Icons.restart_alt_rounded, color: Color(0xFF4338CA)),
+            Icon(Icons.restart_alt_rounded, color: Color(0xFF059669)),
             SizedBox(width: 8),
             Text('Perlu Restart Aplikasi', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
           ],
@@ -58,7 +58,7 @@ class _GovPolicyBriefViewState extends State<GovPolicyBriefView> {
               _openInAppReader();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4338CA),
+              backgroundColor: const Color(0xFF059669),
               foregroundColor: Colors.white,
             ),
             icon: const Icon(Icons.chrome_reader_mode_rounded, size: 16),
@@ -116,10 +116,10 @@ class _GovPolicyBriefViewState extends State<GovPolicyBriefView> {
                   leading: Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEEF2FF),
+                      color: const Color(0xFFECFDF5),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.chrome_reader_mode_rounded, color: Color(0xFF4338CA)),
+                    child: const Icon(Icons.chrome_reader_mode_rounded, color: Color(0xFF059669)),
                   ),
                   title: const Text(
                     'Baca Naskah Langsung di Aplikasi',
@@ -253,8 +253,8 @@ class _GovPolicyBriefViewState extends State<GovPolicyBriefView> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryPurple = Color(0xFF4338CA);
-    const darkPurple = Color(0xFF312E81);
+    const primaryPurple = Color(0xFF059669);
+    const darkPurple = Color(0xFF065F46);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -270,9 +270,9 @@ class _GovPolicyBriefViewState extends State<GovPolicyBriefView> {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: const Color(0xFFEEF2FF),
+                color: const Color(0xFFECFDF5),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFC7D2FE)),
+                border: Border.all(color: const Color(0xFFA7F3D0)),
               ),
               child: Image.asset(
                 'assets/img/logo.png',
@@ -360,13 +360,13 @@ class _GovPolicyBriefViewState extends State<GovPolicyBriefView> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.description, color: Color(0xFFA5B4FC), size: 16),
+                            Icon(Icons.description, color: Color(0xFF6EE7B7), size: 16),
                             SizedBox(width: 6),
                             Flexible(
                               child: Text(
                                 'EXECUTIVE POLICY BRIEF #01/2026',
                                 style: TextStyle(
-                                  color: Color(0xFFC7D2FE),
+                                  color: Color(0xFFA7F3D0),
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 0.6,
@@ -407,7 +407,7 @@ class _GovPolicyBriefViewState extends State<GovPolicyBriefView> {
                   const SizedBox(height: 8),
                   const Text(
                     'Mengintegrasikan model peramalan deret waktu untuk memandu kebijakan insentif pajak karbon, kepatuhan batas CBAM 0.80 tCO2/t, dan perlindungan rantai pasok UMKM scrap sirkular.',
-                    style: TextStyle(color: Color(0xFFE0E7FF), fontSize: 11.5, height: 1.4),
+                    style: TextStyle(color: Color(0xFFD1FAE5), fontSize: 11.5, height: 1.4),
                   ),
                   const SizedBox(height: 16),
                   Row(

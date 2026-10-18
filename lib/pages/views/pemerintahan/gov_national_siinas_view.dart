@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// ============================================================================
 /// HALAMAN NASIONAL SIINAS & STATUS MRV (ROLE PEMERINTAH / REGULATOR)
-/// Tema Desain: Flat Modern Royal Purple / Deep Indigo (#4338CA & #312E81)
+/// Tema Desain: Flat Modern Emerald Green (#059669 & #065F46)
 /// Membaca Data Real-Time dari Tabel Supabase: public.companies (Role: perusahaan_baja)
 /// ============================================================================
 class GovNationalSiinasView extends StatefulWidget {
@@ -300,8 +300,8 @@ class _GovNationalSiinasViewState extends State<GovNationalSiinasView> {
 
   @override
   Widget build(BuildContext context) {
-    const primaryPurple = Color(0xFF4338CA); // Deep Indigo
-    const darkPurple = Color(0xFF312E81);    // Royal Navy Purple
+    const primaryPurple = Color(0xFF059669); // Emerald Green
+    const darkPurple = Color(0xFF065F46);    // Deep Forest Emerald
 
     // Filter pencarian & status MRV
     final filteredList = _companiesList.where((comp) {
@@ -338,7 +338,7 @@ class _GovNationalSiinasViewState extends State<GovNationalSiinasView> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      // APPBAR KHUSUS PEMERINTAH (FLAT, PURPLE THEME, LOGO ASLI SABER CARBON)
+      // APPBAR KHUSUS PEMERINTAH (FLAT, GREEN THEME, LOGO ASLI SABER CARBON)
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -352,9 +352,9 @@ class _GovNationalSiinasViewState extends State<GovNationalSiinasView> {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: const Color(0xFFEEF2FF),
+                color: const Color(0xFFECFDF5),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFC7D2FE)),
+                border: Border.all(color: const Color(0xFFA7F3D0)),
               ),
               child: Image.asset(
                 'assets/img/logo.png',
@@ -439,13 +439,13 @@ class _GovNationalSiinasViewState extends State<GovNationalSiinasView> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.verified_user, color: Color(0xFFA5B4FC), size: 16),
+                              Icon(Icons.verified_user, color: Color(0xFF6EE7B7), size: 16),
                               SizedBox(width: 6),
                               Flexible(
                                 child: Text(
                                   'AUDIT MRV NASIONAL',
                                   style: TextStyle(
-                                    color: Color(0xFFC7D2FE),
+                                    color: Color(0xFFA7F3D0),
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
                                     letterSpacing: 0.5,
@@ -487,7 +487,7 @@ class _GovNationalSiinasViewState extends State<GovNationalSiinasView> {
                     const SizedBox(height: 4),
                     const Text(
                       'Agregat Emisi Industri Baja Terdaftar (Target Penurunan -35% NDC 2030)',
-                      style: TextStyle(color: Color(0xFFE0E7FF), fontSize: 11.5),
+                      style: TextStyle(color: Color(0xFFD1FAE5), fontSize: 11.5),
                     ),
                     const SizedBox(height: 16),
                     const Divider(color: Colors.white24, height: 1),
@@ -669,7 +669,7 @@ class _GovNationalSiinasViewState extends State<GovNationalSiinasView> {
           const SizedBox(height: 2),
           Text(
             label,
-            style: const TextStyle(color: Color(0xFFC7D2FE), fontSize: 9.5),
+            style: const TextStyle(color: Color(0xFFA7F3D0), fontSize: 9.5),
           ),
         ],
       ),

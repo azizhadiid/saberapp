@@ -31,8 +31,8 @@ class PolicyBriefPdfService {
     final double umkmBudget = (100 - budgetSplit) * 1.8;
 
     // Warna tema dokumen resmi
-    final navyColor = PdfColor.fromHex('#1E1B4B'); // Deep Royal Navy
-    final primaryIndigo = PdfColor.fromHex('#3730A3');
+    final navyColor = PdfColor.fromHex('#064E3B'); // Deep Royal Navy
+    final primaryIndigo = PdfColor.fromHex('#059669');
     final darkSlate = PdfColor.fromHex('#0F172A');
     final textMuted = PdfColor.fromHex('#475569');
     final bgLight = PdfColor.fromHex('#F8FAFC');
@@ -562,7 +562,7 @@ class PolicyBriefPdfService {
       margin: const pw.EdgeInsets.only(bottom: 6),
       padding: const pw.EdgeInsets.symmetric(vertical: 3, horizontal: 6),
       decoration: pw.BoxDecoration(
-        color: PdfColor.fromHex('#EEF2FF'),
+        color: PdfColor.fromHex('#ECFDF5'),
         borderRadius: const pw.BorderRadius.all(pw.Radius.circular(3)),
       ),
       child: pw.Text(
@@ -570,7 +570,7 @@ class PolicyBriefPdfService {
         style: pw.TextStyle(
           fontSize: 9.5,
           fontWeight: pw.FontWeight.bold,
-          color: PdfColor.fromHex('#312E81'),
+          color: PdfColor.fromHex('#065F46'),
         ),
       ),
     );
@@ -640,7 +640,7 @@ class PolicyBriefPdfService {
           width: 16,
           height: 16,
           decoration: pw.BoxDecoration(
-            color: PdfColor.fromHex('#312E81'),
+            color: PdfColor.fromHex('#065F46'),
             shape: pw.BoxShape.circle,
           ),
           alignment: pw.Alignment.center,

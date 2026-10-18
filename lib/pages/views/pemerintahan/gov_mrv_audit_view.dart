@@ -60,16 +60,16 @@ class _GovMrvAuditViewState extends State<GovMrvAuditView> {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: const Color(0xFFEEF2FF),
+                color: const Color(0xFFECFDF5),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFC7D2FE)),
+                border: Border.all(color: const Color(0xFFA7F3D0)),
               ),
               child: Image.asset(
                 'assets/img/logo.png',
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) => const Icon(
                   Icons.fact_check,
-                  color: Color(0xFF4338CA),
+                  color: Color(0xFF059669),
                   size: 20,
                 ),
               ),
@@ -129,7 +129,7 @@ class _GovMrvAuditViewState extends State<GovMrvAuditView> {
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF4338CA),
+                        color: Color(0xFF059669),
                       ),
                     ),
                     Container(
@@ -241,7 +241,7 @@ class _GovMrvAuditViewState extends State<GovMrvAuditView> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isVerified
                             ? const Color(0xFF16A34A)
-                            : const Color(0xFF4338CA),
+                            : const Color(0xFF059669),
                         foregroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
