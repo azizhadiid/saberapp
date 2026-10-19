@@ -49,7 +49,7 @@ class PolicyBriefPdfService {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text(
-                    'REPUBLIK INDONESIA • KEMENTERIAN PERINDUSTRIAN & KLHK RI',
+                    'REPUBLIK INDONESIA | KEMENTERIAN PERINDUSTRIAN & KLHK RI',
                     style: pw.TextStyle(
                       fontSize: 8,
                       fontWeight: pw.FontWeight.bold,
@@ -161,7 +161,7 @@ class PolicyBriefPdfService {
                       ),
                     ),
                     pw.Text(
-                      'Jl. Jend. Gatot Subroto Kav. 52-53, Jakarta 12950 • Portal Terpadu: siinas.kemenperin.go.id',
+                      'Jl. Jend. Gatot Subroto Kav. 52-53, Jakarta 12950 | Portal Terpadu: siinas.kemenperin.go.id',
                       style: pw.TextStyle(fontSize: 7.5, color: textMuted),
                     ),
                   ],
@@ -206,7 +206,7 @@ class PolicyBriefPdfService {
                         borderRadius: pw.BorderRadius.all(pw.Radius.circular(3)),
                       ),
                       child: pw.Text(
-                        'DOKUMEN KEBIJAKAN STRATEGIS • EKSEKUTIF',
+                        'DOKUMEN KEBIJAKAN STRATEGIS | EKSEKUTIF',
                         style: pw.TextStyle(
                           color: PdfColors.white,
                           fontSize: 7.5,
@@ -434,9 +434,22 @@ class PolicyBriefPdfService {
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text(
-                      '• Porsi Pendidikan & Reskilling Tenaga Kerja (${budgetSplit.toInt()}%)',
-                      style: const pw.TextStyle(fontSize: 8.5),
+                    pw.Row(
+                      children: [
+                        pw.Container(
+                          width: 3.5,
+                          height: 3.5,
+                          margin: const pw.EdgeInsets.only(right: 5),
+                          decoration: const pw.BoxDecoration(
+                            color: PdfColors.grey700,
+                            shape: pw.BoxShape.circle,
+                          ),
+                        ),
+                        pw.Text(
+                          'Porsi Pendidikan & Reskilling Tenaga Kerja (${budgetSplit.toInt()}%)',
+                          style: const pw.TextStyle(fontSize: 8.5),
+                        ),
+                      ],
                     ),
                     pw.Text(
                       'Rp ${educationBudget.toStringAsFixed(1)} Miliar',
@@ -452,9 +465,22 @@ class PolicyBriefPdfService {
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
-                    pw.Text(
-                      '• Porsi Bantuan Mesin & Gudang Scrap UMKM (${(100 - budgetSplit).toInt()}%)',
-                      style: const pw.TextStyle(fontSize: 8.5),
+                    pw.Row(
+                      children: [
+                        pw.Container(
+                          width: 3.5,
+                          height: 3.5,
+                          margin: const pw.EdgeInsets.only(right: 5),
+                          decoration: const pw.BoxDecoration(
+                            color: PdfColors.grey700,
+                            shape: pw.BoxShape.circle,
+                          ),
+                        ),
+                        pw.Text(
+                          'Porsi Bantuan Mesin & Gudang Scrap UMKM (${(100 - budgetSplit).toInt()}%)',
+                          style: const pw.TextStyle(fontSize: 8.5),
+                        ),
+                      ],
                     ),
                     pw.Text(
                       'Rp ${umkmBudget.toStringAsFixed(1)} Miliar',
@@ -545,7 +571,7 @@ class PolicyBriefPdfService {
                   ),
                   pw.SizedBox(height: 40),
                   pw.Text('( Dr. Ir. Aditia Rahmad, M.Sc. )', style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold)),
-                  pw.Text('NIDN. 0724088901 • Tim Ahli Kebijakan', style: pw.TextStyle(fontSize: 7.5, color: textMuted)),
+                  pw.Text('NIDN. 0724088901 | Tim Ahli Kebijakan', style: pw.TextStyle(fontSize: 7.5, color: textMuted)),
                 ],
               ),
             ],

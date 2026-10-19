@@ -155,7 +155,7 @@ class PolicyBriefReaderPage extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'Jl. Jend. Gatot Subroto Kav. 52-53, Jakarta 12950 • Portal Terpadu: siinas.kemenperin.go.id',
+                            'Jl. Jend. Gatot Subroto Kav. 52-53, Jakarta 12950 | Portal Terpadu: siinas.kemenperin.go.id',
                             style: TextStyle(fontSize: 8, color: Color(0xFF64748B)),
                           ),
                         ],
@@ -200,7 +200,7 @@ class PolicyBriefReaderPage extends StatelessWidget {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
-                              'DOKUMEN KEBIJAKAN STRATEGIS • EKSEKUTIF',
+                              'DOKUMEN KEBIJAKAN STRATEGIS | EKSEKUTIF',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 8,
@@ -555,7 +555,7 @@ class PolicyBriefReaderPage extends StatelessWidget {
                         const SizedBox(height: 44),
                         const Text('( Dr. Ir. Aditia Rahmad, M.Sc. )', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 2),
-                        const Text('NIDN. 0724088901 • Tim Ahli Kebijakan', style: TextStyle(fontSize: 8.5, color: Color(0xFF64748B))),
+                        const Text('NIDN. 0724088901 | Tim Ahli Kebijakan', style: TextStyle(fontSize: 8.5, color: Color(0xFF64748B))),
                       ],
                     ),
                   ],
