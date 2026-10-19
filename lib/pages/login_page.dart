@@ -138,114 +138,436 @@ class _LoginPageState extends State<LoginPage> {
             final registeredName = _getRoleDisplayName(registeredRole);
             final chosenName = _getRoleDisplayName(normalizedChosenRole);
 
-            // Dialog opsi untuk pengujian Belmawa / Kemendikbud:
-            // Beralih ke portal asal ATAU langsung ubah peran akun ke portal yang dipilih
+            // Dialog elegan & korporat: Sempurna rata tengah, modern, dan memudahkan pengujian Belmawa
             await showDialog(
               context: context,
               barrierDismissible: false,
-              builder: (ctx) => AlertDialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+              builder: (ctx) => Dialog(
+                backgroundColor: Colors.transparent,
+                insetPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 24,
                 ),
-                icon: const Icon(
-                  Icons.swap_horiz_rounded,
-                  color: Color(0xFF059669),
-                  size: 44,
-                ),
-                title: const Text(
-                  'Perbedaan Peran Akun',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
-                content: Text(
-                  'Akun Google Anda (${user.email}) saat ini terdaftar sebagai "$registeredName".\n\n'
-                  'Anda sedang masuk di portal "$chosenName". '
-                  'Untuk kemudahan pengujian Belmawa/Kemendikbud, Anda dapat beralih ke portal terdaftar atau langsung mengubah peran akun ini menjadi "$chosenName".',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF475569),
-                    height: 1.45,
-                  ),
-                ),
-                actionsAlignment: MainAxisAlignment.spaceEvenly,
-                actions: [
-                  OutlinedButton(
-                    onPressed: () async {
-                      Navigator.pop(ctx);
-                      await Supabase.instance.client.auth.signOut();
-                      if (mounted) {
-                        setState(() {
-                          _selectedRole = registeredRole!;
-                        });
-                      }
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF475569),
-                      side: const BorderSide(color: Color(0xFFCBD5E1)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  padding: const EdgeInsets.fromLTRB(22, 24, 22, 20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.16),
+                        blurRadius: 28,
+                        offset: const Offset(0, 10),
                       ),
-                    ),
-                    child: Text('Ke Portal $registeredName'),
+                    ],
                   ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      Navigator.pop(ctx);
-                      try {
-                        if (companyRes != null && companyRes['id'] != null) {
-                          await Supabase.instance.client
-                              .from('companies')
-                              .update({'role': normalizedChosenRole})
-                              .eq('id', companyRes['id']);
-                        } else {
-                          await Supabase.instance.client
-                              .from('companies')
-                              .update({'role': normalizedChosenRole})
-                              .eq('user_id', user.id);
-                        }
-                        await Supabase.instance.client.auth.updateUser(
-                          UserAttributes(
-                            data: {'user_role': normalizedChosenRole},
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Header Badge Icon
+                      Container(
+                        width: 58,
+                        height: 58,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFFA7F3D0),
+                            width: 1.5,
                           ),
-                        );
-                        if (!mounted) return;
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MainContainer(
-                              initialIndex: 0,
-                              userRole: normalizedChosenRole,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF059669).withValues(
+                                alpha: 0.14,
+                              ),
+                              blurRadius: 14,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.swap_horizontal_circle_rounded,
+                          color: Color(0xFF059669),
+                          size: 32,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Pill Tag Korporat
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF059669),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Text(
+                              'SINKRONISASI ROLE AKUN',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: Color(0xFF475569),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Judul Dialog
+                      const Text(
+                        'Perbedaan Peran Akun',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 18.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+
+                      // Subtitle Penjelasan
+                      const Text(
+                        'Terdeteksi perbedaan antara portal yang Anda tuju dengan status peran akun terdaftar.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Kartu Komparasi Peran & Akun
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Column(
+                          children: [
+                            // Badge Email Akun
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color(0xFFE2E8F0),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.account_circle,
+                                    size: 14,
+                                    color: Color(0xFF059669),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      user.email ?? 'Akun Terverifikasi',
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF334155),
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+
+                            // Baris Transisi Peran
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                      horizontal: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: const Color(0xFFE2E8F0),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        const Text(
+                                          'Terdaftar Sebagai',
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w500,
+                                            color: Color(0xFF64748B),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          registeredName,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF1E293B),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(5),
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFECFDF5),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.arrow_forward_rounded,
+                                      size: 14,
+                                      color: Color(0xFF059669),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                      horizontal: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFECFDF5),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: const Color(0xFFA7F3D0),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        const Text(
+                                          'Portal Pilihan',
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF059669),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 3),
+                                        Text(
+                                          chosenName,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF047857),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Keterangan Belmawa
+                      const Text(
+                        'Untuk evaluasi Belmawa / Kemendikbud, Anda dapat langsung beralih portal atau memperbarui peran akun ini.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: Color(0xFF64748B),
+                          height: 1.35,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+
+                      // Tombol 1 (Primary - Rata Tengah, Full-Width, Elegan)
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            Navigator.pop(ctx);
+                            try {
+                              if (companyRes != null && companyRes['id'] != null) {
+                                await Supabase.instance.client
+                                    .from('companies')
+                                    .update({'role': normalizedChosenRole})
+                                    .eq('id', companyRes['id']);
+                              } else {
+                                await Supabase.instance.client
+                                    .from('companies')
+                                    .update({'role': normalizedChosenRole})
+                                    .eq('user_id', user.id);
+                              }
+                              await Supabase.instance.client.auth.updateUser(
+                                UserAttributes(
+                                  data: {'user_role': normalizedChosenRole},
+                                ),
+                              );
+                              if (!mounted) return;
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MainContainer(
+                                    initialIndex: 0,
+                                    userRole: normalizedChosenRole,
+                                  ),
+                                ),
+                                (route) => false,
+                              );
+                            } catch (e) {
+                              debugPrint('Error switch role: $e');
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Gagal mengubah peran: $e'),
+                                    backgroundColor: const Color(0xFFDC2626),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF059669),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(11),
                             ),
                           ),
-                          (route) => false,
-                        );
-                      } catch (e) {
-                        debugPrint('Error switch role: $e');
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Gagal mengubah peran: $e'),
-                              backgroundColor: const Color(0xFFDC2626),
-                            ),
-                          );
-                        }
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF059669),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.sync_alt_rounded, size: 17),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  'Perbarui Akun ke $chosenName',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12.5,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                    child: Text('Ganti ke $chosenName'),
+                      const SizedBox(height: 8),
+
+                      // Tombol 2 (Secondary - Rata Tengah, Full-Width, Elegan)
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: OutlinedButton(
+                          onPressed: () async {
+                            Navigator.pop(ctx);
+                            await Supabase.instance.client.auth.signOut();
+                            if (mounted) {
+                              setState(() {
+                                _selectedRole = registeredRole!;
+                              });
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: const Color(0xFFF8FAFC),
+                            foregroundColor: const Color(0xFF334155),
+                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(11),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.login_rounded,
+                                size: 16,
+                                color: Color(0xFF64748B),
+                              ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  'Beralih ke Portal $registeredName',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12.5,
+                                    color: Color(0xFF334155),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+
+                      // Tombol Batalkan Masuk
+                      TextButton(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          await Supabase.instance.client.auth.signOut();
+                        },
+                        child: const Text(
+                          'Batalkan Masuk',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF94A3B8),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             );
           }
