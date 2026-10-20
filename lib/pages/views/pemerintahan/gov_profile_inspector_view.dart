@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../login_page.dart';
+import '../../app_manual_page.dart';
+import '../../../widgets/first_time_walkthrough_dialog.dart';
 
 /// ============================================================================
 /// GOV PROFILE INSPECTOR VIEW (PROFIL PEMERINTAH DAN OTORITAS MRV)
@@ -754,7 +756,94 @@ class _GovProfileInspectorViewState extends State<GovProfileInspectorView> {
               description: 'Menilai kesesuaian ambang batas 0.80 tCO2/t untuk kelayakan insentif fiskal dan kepatuhan ekspor.',
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 18),
+
+            // KARTU PUSAT BANTUAN, PANDUAN & TUTORIAL
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                children: [
+                  ListTile(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AppManualPage(),
+                      ),
+                    ),
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.menu_book_rounded,
+                        color: Color(0xFF059669),
+                        size: 18,
+                      ),
+                    ),
+                    title: const Text(
+                      'Buku Panduan & Kebijakan Hak Akses',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    subtitle: const Text(
+                      'Manual alur kerja & batasan akses regulator non-publik',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
+                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                  ListTile(
+                    onTap: () => FirstTimeWalkthroughDialog.show(
+                      context,
+                      'pemerintah',
+                      force: true,
+                    ),
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.explore_outlined,
+                        color: Color(0xFF0D9488),
+                        size: 18,
+                      ),
+                    ),
+                    title: const Text(
+                      'Ulangi Tutorial Alur Aplikasi',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    subtitle: const Text(
+                      'Tampilkan kembali panduan langkah inspeksi & verifikasi MRV',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                    trailing: const Icon(
+                      Icons.replay_rounded,
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
 
             // ==============================================================
             // 4. TOMBOL KELUAR DARI PORTAL PEMERINTAH

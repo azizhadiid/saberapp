@@ -16,6 +16,7 @@ import 'views/umkm/umkm_demand_view.dart';
 import 'views/umkm/umkm_partnership_view.dart';
 import 'views/umkm/umkm_profile_view.dart';
 import 'views/umkm/umkm_add_supply_dialog.dart';
+import '../widgets/first_time_walkthrough_dialog.dart';
 
 class MainContainer extends StatefulWidget {
   final int initialIndex;
@@ -86,6 +87,13 @@ class _MainContainerState extends State<MainContainer> {
     }
 
     _navIndex = widget.initialIndex.clamp(0, _screens.length - 1);
+
+    // Pemicu First-Time Walkthrough (Hanya muncul sekali per role, disimpan di SharedPreferences)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        FirstTimeWalkthroughDialog.show(context, _roleKey);
+      }
+    });
   }
 
   @override

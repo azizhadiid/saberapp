@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart';
 import 'register_page.dart';
+import 'app_manual_page.dart';
 
 class OnboardingPage extends StatelessWidget {
   const OnboardingPage({super.key});
@@ -17,26 +18,108 @@ class OnboardingPage extends StatelessWidget {
             ),
           ),
           Positioned.fill(
-            child: Container(color: Colors.black.withValues(alpha: 0.58)),
+            child: Container(color: Colors.black.withValues(alpha: 0.62)),
           ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: 24.0,
-                vertical: 28.0,
+                horizontal: 22.0,
+                vertical: 18.0,
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // Top Header Bar: Status Ekosistem Tertutup & Tombol Panduan Cepat
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.22),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: const Color(0xFF34D399).withValues(alpha: 0.6),
+                            width: 1,
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.verified_user_outlined,
+                              color: Color(0xFF6EE7B7),
+                              size: 13,
+                            ),
+                            SizedBox(width: 5),
+                            Text(
+                              'B2B & G2B TERTUTUP',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AppManualPage(),
+                          ),
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.16),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.35),
+                              width: 1,
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.menu_book_rounded,
+                                color: Colors.white,
+                                size: 14,
+                              ),
+                              SizedBox(width: 5),
+                              Text(
+                                'Manual & Kebijakan',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const Spacer(),
                   Container(
-                    width: 140,
-                    height: 140,
+                    width: 128,
+                    height: 128,
                     decoration: const BoxDecoration(
                       color: Color(0xFFE5E7EB),
                       shape: BoxShape.circle,
                     ),
-                    padding: const EdgeInsets.all(26),
+                    padding: const EdgeInsets.all(24),
                     child: Image.asset(
                       'assets/img/logo.png',
                       fit: BoxFit.contain,
@@ -47,7 +130,7 @@ class OnboardingPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -55,7 +138,7 @@ class OnboardingPage extends StatelessWidget {
                         width: 24,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: const Color(0xFF10B981),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -79,24 +162,25 @@ class OnboardingPage extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
                   const Text(
                     'Industri Baja: Hijaukan Masa\nDepan, Kurangi Emisi',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: 23,
                       fontWeight: FontWeight.bold,
                       height: 1.25,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   const Text(
                     'Ekosistem Terpadu Perusahaan Baja, UMKM Scrap (MRF),\ndan Regulator Menuju Net Zero 2060.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white70, fontSize: 13.5),
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                   const Spacer(),
+
                   // Tombol Masuk (sebelumnya LOGIN)
                   SizedBox(
                     width: double.infinity,
@@ -126,7 +210,8 @@ class OnboardingPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
+
                   // Tombol Buat Akun
                   SizedBox(
                     width: double.infinity,
@@ -155,7 +240,47 @@ class OnboardingPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
+
+                  // Link Bawah: Panduan Aplikasi & Kebijakan Hak Akses Non-Publik
+                  InkWell(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AppManualPage(),
+                      ),
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.help_outline_rounded,
+                            size: 15,
+                            color: Colors.white.withValues(alpha: 0.85),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Manual Aplikasi & Siapa Saja yang Berhak Masuk?',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              decoration: TextDecoration.underline,
+                              decorationColor: Colors.white54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
                 ],
               ),
             ),

@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'login_page.dart';
+import 'app_manual_page.dart';
+import '../widgets/first_time_walkthrough_dialog.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -767,27 +769,86 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 24),
 
             // ==============================================================
-            // 7. PUSAT BANTUAN & KELUAR AKUN
+            // 7. PUSAT BANTUAN, PANDUAN & KELUAR AKUN
             // ==============================================================
             Container(
-              width: double.infinity,
-              height: 48,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Column(
                 children: [
-                  Icon(Icons.help_outline_rounded, color: Color(0xFF64748B), size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    'Pusat Bantuan & Panduan MRV SABER KARBON',
-                    style: TextStyle(
-                      color: Color(0xFF334155),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
+                  ListTile(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AppManualPage(),
+                      ),
+                    ),
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.menu_book_rounded,
+                        color: Color(0xFF059669),
+                        size: 18,
+                      ),
+                    ),
+                    title: const Text(
+                      'Buku Panduan & Kebijakan Hak Akses',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    subtitle: const Text(
+                      'Manual alur kerja & batasan akses non-publik platform',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
+                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                  ListTile(
+                    onTap: () => FirstTimeWalkthroughDialog.show(
+                      context,
+                      'perusahaan_baja',
+                      force: true,
+                    ),
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.explore_outlined,
+                        color: Color(0xFF0284C7),
+                        size: 18,
+                      ),
+                    ),
+                    title: const Text(
+                      'Ulangi Tutorial Alur Aplikasi',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    subtitle: const Text(
+                      'Tampilkan kembali panduan langkah awal pabrik baja',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                    trailing: const Icon(
+                      Icons.replay_rounded,
+                      color: Color(0xFF94A3B8),
                     ),
                   ),
                 ],

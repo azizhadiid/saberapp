@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'login_page.dart';
 import 'main_container.dart';
+import 'app_manual_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -74,6 +75,15 @@ class _RegisterPageState extends State<RegisterPage> {
     if (role == 'perusahaan_baja') return 'esg@perusahaanbaja.co.id';
     if (role == 'perusahaan_hijau') return 'lapak.scrap@umkm.id';
     return 'auditor@kemenperin.go.id';
+  }
+
+  String _getRoleAccessNotice(String role) {
+    if (role == 'perusahaan_baja') {
+      return 'Khusus Pabrik Baja terdaftar KBLI 2410 & SIINas Kemenperin.';
+    } else if (role == 'perusahaan_hijau') {
+      return 'Khusus UMKM/Depo Scrap terkurasi Standar MRV Kemenperin.';
+    }
+    return 'Khusus Auditor Pemerintah, KLHK, SIINas & Penguji Belmawa.';
   }
 
   @override
@@ -822,6 +832,46 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 8),
+
+                    // Tombol Batalkan Pendaftaran (Tombol Merah & Teks Putih)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          await Supabase.instance.client.auth.signOut();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFDC2626),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(11),
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.close_rounded,
+                              size: 17,
+                              color: Colors.white,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Batalkan Pendaftaran',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12.5,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -974,6 +1024,46 @@ class _RegisterPageState extends State<RegisterPage> {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Tombol Batalkan Pendaftaran (Tombol Merah & Teks Putih)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          await Supabase.instance.client.auth.signOut();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFDC2626),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(11),
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.close_rounded,
+                              size: 17,
+                              color: Colors.white,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Batalkan Pendaftaran',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12.5,
+                                color: Colors.white,
                               ),
                             ),
                           ],
@@ -1136,7 +1226,66 @@ class _RegisterPageState extends State<RegisterPage> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 10),
+
+                        // Banner Informasi Hak Akses Tertutup
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.shield_outlined,
+                                size: 14,
+                                color: Color(0xFF059669),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  _getRoleAccessNotice(_selectedRole),
+                                  style: const TextStyle(
+                                    fontSize: 10.5,
+                                    color: Color(0xFF475569),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              InkWell(
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const AppManualPage(
+                                      initialTabIndex: 1,
+                                    ),
+                                  ),
+                                ),
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 2,
+                                  ),
+                                  child: Text(
+                                    'Detail',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      color: Color(0xFF059669),
+                                      fontWeight: FontWeight.bold,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
 
                         // Input Forms
                         _buildInputField(
@@ -1319,6 +1468,36 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Link Bawah Menuju Manual Aplikasi & Kebijakan Hak Akses
+                        InkWell(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AppManualPage(),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.menu_book_rounded,
+                                size: 14,
+                                color: _getRoleColor(_selectedRole),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Manual Aplikasi & Kebijakan Hak Akses',
+                                style: TextStyle(
+                                  color: _getRoleColor(_selectedRole),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
