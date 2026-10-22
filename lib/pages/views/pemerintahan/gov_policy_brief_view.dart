@@ -5,7 +5,7 @@ import 'policy_brief_reader_page.dart';
 
 /// ============================================================================
 /// POLICY BRIEF & 4 PILAR SDGS (PEMERINTAH / REGULATOR)
-/// DILENGKAPI PEMBACA NASKAH DIGITAL & SISTEM UNDUH PDF RESMI KEMENPERIN-KLHK
+/// DILENGKAPI PEMBACA NASKAH DIGITAL & SISTEM UNDUH PDF RESMI KEMENPERIN-BPPHLHK
 /// ============================================================================
 class GovPolicyBriefView extends StatefulWidget {
   const GovPolicyBriefView({super.key});
@@ -105,7 +105,7 @@ class _GovPolicyBriefViewState extends State<GovPolicyBriefView> {
                   ],
                 ),
                 const Text(
-                  'Format Dokumen Resmi Kemenperin-KLHK RI • Saber Karbon 2026',
+                  'Format Dokumen Resmi Kemenperin-BPPHLHK RI • Saber Karbon 2026',
                   style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
                 ),
                 const SizedBox(height: 16),
@@ -384,7 +384,7 @@ class _GovPolicyBriefViewState extends State<GovPolicyBriefView> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Text(
-                          'Kemenperin • KLHK',
+                          'Kemenperin • BPPHLHK',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 10,

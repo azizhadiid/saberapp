@@ -46,7 +46,7 @@ class PolicyBriefReaderPage extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             Text(
-              'PB.01/MENPERIN-KLHK/DEKARB-BAJA/X/2026',
+              'PB.01/MENPERIN-BPPHLHK/DEKARB-BAJA/X/2026',
               style: TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
               overflow: TextOverflow.ellipsis,
             ),
@@ -139,9 +139,9 @@ class PolicyBriefReaderPage extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'KEMENTERIAN LINGKUNGAN HIDUP DAN KEHUTANAN RI',
+                            'BALAI PENGAMANAN & PENEGAKAN HUKUM LHK (BPPHLHK RI)',
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: 9.5,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF0F172A),
                             ),
@@ -182,11 +182,14 @@ class PolicyBriefReaderPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 6,
                         children: [
                           const Text(
-                            'NOMOR: PB.01/MENPERIN-KLHK/DEKARB-BAJA/X/2026',
+                            'NOMOR: PB.01/MENPERIN-BPPHLHK/DEKARB-BAJA/X/2026',
                             style: TextStyle(
                               fontSize: 9.5,
                               fontWeight: FontWeight.bold,
@@ -194,7 +197,7 @@ class PolicyBriefReaderPage extends StatelessWidget {
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
                             decoration: BoxDecoration(
                               color: const Color(0xFFDC2626),
                               borderRadius: BorderRadius.circular(4),
@@ -234,7 +237,7 @@ class PolicyBriefReaderPage extends StatelessWidget {
                           ),
                           Expanded(
                             child: Text(
-                              'Menko Perekonomian, Menperin RI, Menteri LHK RI, BPDLH, dan Pengurus Asosiasi Baja (IISIA)',
+                              'Menko Perekonomian, Menperin RI, Kepala BPPHLHK RI, BPDLH, dan Pengurus Asosiasi Baja (IISIA)',
                               style: TextStyle(fontSize: 9, color: Color(0xFF64748B)),
                             ),
                           ),
@@ -383,7 +386,7 @@ class PolicyBriefReaderPage extends StatelessWidget {
                   number: '1',
                   title: 'Standardisasi Mutu Scrap Nasional & Kemitraan Sirkular UMKM',
                   content:
-                      'Menerbitkan Peraturan Bersama Kemenperin-KLHK tentang Standar Baku Mutu Scrap Logam Sirkular (bebas tramp elements) serta pembebasan PPh Pasal 22 bagi pabrik yang bermitra resmi dengan koperasi UMKM scrap binaan.',
+                      'Menerbitkan Peraturan Bersama Kemenperin-BPPHLHK tentang Standar Baku Mutu Scrap Logam Sirkular (bebas tramp elements) serta pembebasan PPh Pasal 22 bagi pabrik yang bermitra resmi dengan koperasi UMKM scrap binaan.',
                 ),
                 const SizedBox(height: 8),
                 _buildBulletRecommendation(
@@ -422,12 +425,14 @@ class PolicyBriefReaderPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            '• Porsi Pendidikan & Reskilling Tenaga Kerja (${budgetSplit.toInt()}%)',
-                            style: const TextStyle(fontSize: 10, color: Color(0xFF334155)),
+                          Expanded(
+                            child: Text(
+                              '• Porsi Pendidikan & Reskilling Tenaga Kerja (${budgetSplit.toInt()}%)',
+                              style: const TextStyle(fontSize: 10, color: Color(0xFF334155)),
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Text(
                             'Rp ${educationBudget.toStringAsFixed(1)} Miliar',
                             style: const TextStyle(
@@ -440,12 +445,14 @@ class PolicyBriefReaderPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            '• Porsi Bantuan Mesin & Gudang Scrap UMKM (${(100 - budgetSplit).toInt()}%)',
-                            style: const TextStyle(fontSize: 10, color: Color(0xFF334155)),
+                          Expanded(
+                            child: Text(
+                              '• Porsi Bantuan Mesin & Gudang Scrap UMKM (${(100 - budgetSplit).toInt()}%)',
+                              style: const TextStyle(fontSize: 10, color: Color(0xFF334155)),
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Text(
                             'Rp ${umkmBudget.toStringAsFixed(1)} Miliar',
                             style: const TextStyle(
@@ -523,40 +530,44 @@ class PolicyBriefReaderPage extends StatelessWidget {
 
                 // Lembar Pengesahan
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text('Mengetahui,', style: TextStyle(fontSize: 10, color: Color(0xFF475569))),
-                        SizedBox(height: 2),
-                        Text(
-                          'Direktur Industri Logam\nKementerian Perindustrian RI',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(height: 44),
-                        Text('( __________________________ )', style: TextStyle(fontSize: 10)),
-                        SizedBox(height: 2),
-                        Text('NIP. 19740512 199903 1 002', style: TextStyle(fontSize: 8.5, color: Color(0xFF64748B))),
-                      ],
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text('Mengetahui,', style: TextStyle(fontSize: 10, color: Color(0xFF475569))),
+                          SizedBox(height: 2),
+                          Text(
+                            'Direktur Industri Logam\nKementerian Perindustrian RI',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 40),
+                          Text('( __________________________ )', style: TextStyle(fontSize: 9.5)),
+                          SizedBox(height: 2),
+                          Text('NIP. 19740512 199903 1 002', style: TextStyle(fontSize: 8, color: Color(0xFF64748B))),
+                        ],
+                      ),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Text('Ditetapkan di Jakarta, 17 Oktober 2026', style: TextStyle(fontSize: 9.5, color: Color(0xFF475569))),
-                        const SizedBox(height: 2),
-                        const Text(
-                          'Koordinator Tim Peneliti & Analis\nInisiatif Saber Karbon 2026',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 44),
-                        const Text('( Dr. Ir. Aditia Rahmad, M.Sc. )', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 2),
-                        const Text('NIDN. 0724088901 | Tim Ahli Kebijakan', style: TextStyle(fontSize: 8.5, color: Color(0xFF64748B))),
-                      ],
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text('Ditetapkan di Jakarta, 17 Oktober 2026', style: TextStyle(fontSize: 9, color: Color(0xFF475569))),
+                          SizedBox(height: 2),
+                          Text(
+                            'Koordinator Tim Analis\nInisiatif Saber Karbon 2026',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 40),
+                          Text('( Dr. Ir. Aditia Rahmad, M.Sc. )', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold)),
+                          SizedBox(height: 2),
+                          Text('NIDN. 0724088901 | Tim Ahli', style: TextStyle(fontSize: 8, color: Color(0xFF64748B))),
+                        ],
+                      ),
                     ),
                   ],
                 ),

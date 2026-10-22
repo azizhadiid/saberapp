@@ -9,7 +9,7 @@ import '../../../widgets/first_time_walkthrough_dialog.dart';
 /// ============================================================================
 /// GOV PROFILE INSPECTOR VIEW (PROFIL PEMERINTAH DAN OTORITAS MRV)
 /// ============================================================================
-/// Dirancang khusus untuk peran Pemerintah (Regulator SIINas, KLHK, & Auditor MRV).
+/// Dirancang khusus untuk peran Pemerintah (Regulator SIINas, BPPHLHK, & Auditor MRV).
 /// ============================================================================
 class GovProfileInspectorView extends StatefulWidget {
   const GovProfileInspectorView({super.key});

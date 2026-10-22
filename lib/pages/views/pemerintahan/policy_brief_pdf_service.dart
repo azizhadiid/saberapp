@@ -13,7 +13,7 @@ class PolicyBriefPdfService {
   }) async {
     final pdf = pw.Document(
       title: 'Policy Brief Dekarbonisasi Industri Baja Nasional 2026',
-      author: 'Kementerian Perindustrian & KLHK RI - Saber Karbon',
+      author: 'Kementerian Perindustrian & BPPHLHK RI - Saber Karbon',
       subject: 'Rekomendasi Kebijakan Dekarbonisasi Hard-to-Abate 2026-2060',
       keywords: 'Policy Brief, CBAM, Dekarbonisasi, Baja Hijau, SDGs, SIINas',
     );
@@ -49,7 +49,7 @@ class PolicyBriefPdfService {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text(
-                    'REPUBLIK INDONESIA | KEMENTERIAN PERINDUSTRIAN & KLHK RI',
+                    'REPUBLIK INDONESIA | KEMENTERIAN PERINDUSTRIAN & BPPHLHK RI',
                     style: pw.TextStyle(
                       fontSize: 8,
                       fontWeight: pw.FontWeight.bold,
@@ -192,7 +192,7 @@ class PolicyBriefPdfService {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      'NOMOR: PB.01/MENPERIN-KLHK/DEKARB-BAJA/X/2026',
+                      'NOMOR: PB.01/MENPERIN-BPPHLHK/DEKARB-BAJA/X/2026',
                       style: pw.TextStyle(
                         fontSize: 8.5,
                         fontWeight: pw.FontWeight.bold,
@@ -239,7 +239,7 @@ class PolicyBriefPdfService {
                     ),
                     pw.Expanded(
                       child: pw.Text(
-                        'Menko Perekonomian, Menteri Perindustrian, Menteri LHK, BPDLH, dan Dewan Pengurus IISIA',
+                        'Menko Perekonomian, Menteri Perindustrian, Kepala BPPHLHK RI, BPDLH, dan Dewan Pengurus IISIA',
                         style: pw.TextStyle(fontSize: 8, color: textMuted),
                       ),
                     ),
@@ -393,7 +393,7 @@ class PolicyBriefPdfService {
             no: '1',
             title: 'Standarisasi Mutu Scrap Nasional & Kemitraan Sirkular UMKM',
             sub:
-                'Menerbitkan Peraturan Bersama Kemenperin-KLHK tentang Standar Baku Mutu Scrap Logam Sirkular (bebas kontaminan radioaktif dan tramp elements) serta pemberian insentif pembebasan PPh Pasal 22 bagi pabrik yang bermitra resmi dengan koperasi UMKM scrap binaan.',
+                'Menerbitkan Peraturan Bersama Kemenperin-BPPHLHK tentang Standar Baku Mutu Scrap Logam Sirkular (bebas kontaminan radioaktif dan tramp elements) serta pemberian insentif pembebasan PPh Pasal 22 bagi pabrik yang bermitra resmi dengan koperasi UMKM scrap binaan.',
           ),
           pw.SizedBox(height: 6),
           _buildRecommendationItem(

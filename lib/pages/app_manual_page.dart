@@ -200,7 +200,7 @@ class _AppManualPageState extends State<AppManualPage>
               ),
               const SizedBox(height: 14),
               const Text(
-                'Saber Karbon adalah platform terintegrasi tripartite (B2B & G2B) yang menjembatani Pabrik Baja Nasional, UMKM Pengepul Scrap Sirkular (MRF), dan Regulator Pemerintah (Kemenperin & KLHK) guna memenuhi ambang batas CBAM Uni Eropa dan target penurunan emisi nasional 35% pada 2030.',
+                'Saber Karbon adalah platform terintegrasi tripartite (B2B & G2B) yang menjembatani Pabrik Baja Nasional, UMKM Pengepul Scrap Sirkular (MRF), dan Regulator Pemerintah (Kemenperin & BPPHLHK RI) guna memenuhi ambang batas CBAM Uni Eropa dan target penurunan emisi nasional 35% pada 2030.',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 12,
@@ -260,7 +260,7 @@ class _AppManualPageState extends State<AppManualPage>
 
         // 3. Role Pemerintah / Regulator
         _buildRoleGuideCard(
-          title: '3. Peran: Pemerintah (Regulator Kemenperin & KLHK)',
+          title: '3. Peran: Pemerintah (Regulator Kemenperin & BPPHLHK RI)',
           roleBadge: 'Otoritas Pengawasan & Akreditasi MRV',
           badgeColor: const Color(0xFF047857),
           icon: Icons.account_balance_outlined,
@@ -269,7 +269,7 @@ class _AppManualPageState extends State<AppManualPage>
           steps: const [
             'SIINas Nasional: Verifikasi status audit MRV cerobong pabrik baja dan kepatuhan standar depo scrap UMKM secara transparan.',
             'Peta Spasial Hotspot: Analisis geospasial sebaran pabrik baja per wilayah (Zona Merah Jatim, Zona Kuning Jabar/Banten, Zona Aman Jateng).',
-            'Naskah Policy Brief: Unduh dan cetak naskah rekomendasi kebijakan resmi Kemenperin-KLHK (bebas error font / 100% vector layout).',
+            'Naskah Policy Brief: Unduh dan cetak naskah rekomendasi kebijakan resmi Kemenperin-BPPHLHK RI (bebas error font / 100% vector layout).',
             'Simulasi Anggaran Transisi: Simulasikan proporsi alokasi insentif fiskal pajak karbon antara Green Reskilling (SDG 4) vs Modernisasi Mesin UMKM (SDG 9).',
           ],
         ),
@@ -415,19 +415,19 @@ class _AppManualPageState extends State<AppManualPage>
             'Memiliki Nomor Induk Berusaha (NIB) sektor pengelolaan daur ulang barang bekas logam / sirkularitas material.',
             'Memiliki depo fisik pengumpulan dan mesin pemilahan/pemadatan scrap (Shearing & Baling Machine).',
             'Lolos uji ambang batas mutu bahan baku: bebas zat radioaktif alam (NORM) dan kadar pengotor Cu < 0.05%.',
-            'Terdaftar dalam wadah koperasi atau asosiasi mitra industri binaan Kemenperin-KLHK.',
+            'Terdaftar dalam wadah koperasi atau asosiasi mitra industri binaan Kemenperin-BPPHLHK.',
           ],
         ),
         const SizedBox(height: 12),
 
         // Entitas 3: Pemerintah
         _buildPolicyCard(
-          title: 'C. Otoritas Pemerintah & Tim Evaluator',
+          title: 'C. Otoritas Pemerintah & Auditor Kedinasan',
           icon: Icons.admin_panel_settings_rounded,
           criteria: const [
-            'Pejabat dan inspektur berwenang di lingkungan Kementerian Perindustrian (Ditjen ILMATE), Kementerian LHK, atau BPDLH.',
+            'Pejabat dan inspektur berwenang di lingkungan Kementerian Perindustrian (Ditjen ILMATE), BPPHLHK RI, atau BPDLH.',
             'Wajib menggunakan kredensial kedinasan resmi (.go.id) atau akun yang telah divalidasi oleh Administrator Pusat Saber Karbon.',
-            'Dikecualikan bagi Tim Penilai / Dewan Juri Belmawa Kemendikbudristek (Satria Data): Diberikan akses Sandbox Evaluator untuk keperluan uji coba dan validasi naskah kompetisi.',
+            'Diberikan hak akses inspeksi terpadu untuk keperluan audit emisi berkala, validasi data SIINas, dan pengawasan operasional lintas sektor.',
             'Memegang kewenangan penuh atas validasi MRV, audit lapangan, serta rekomendasi kebijakan naskah strategis.',
           ],
         ),

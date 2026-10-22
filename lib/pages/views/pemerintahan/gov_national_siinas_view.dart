@@ -623,7 +623,7 @@ class _GovNationalSiinasViewState extends State<GovNationalSiinasView> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    'Kementerian Perindustrian & KLHK RI',
+                    'Kementerian Perindustrian & BPPHLHK RI',
                     style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                     overflow: TextOverflow.ellipsis,
                   ),

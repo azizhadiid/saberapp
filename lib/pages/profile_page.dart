@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'login_page.dart';
 import 'app_manual_page.dart';
+import 'views/perusahaan_baja/steel_compliance_guide_view.dart';
 import '../widgets/first_time_walkthrough_dialog.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -779,6 +780,66 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               child: Column(
                 children: [
+                  ListTile(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SteelComplianceGuideView(),
+                      ),
+                    ),
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.policy_outlined,
+                        color: Color(0xFF059669),
+                        size: 18,
+                      ),
+                    ),
+                    title: Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        const Text(
+                          'Policy Brief Perusahaan Baja',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD1FAE5),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'REGULASI & FISKAL',
+                            style: TextStyle(
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF047857),
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    subtitle: const Text(
+                      'Peta jalan regulasi CBAM, fasilitas insentif pajak, dan rekomendasi dekarbonisasi',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
+                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
                   ListTile(
                     onTap: () => Navigator.push(
                       context,

@@ -4,6 +4,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'login_page.dart';
 import 'main_container.dart';
 import 'app_manual_page.dart';
+import 'onboarding_page.dart';
+import 'views/pemerintahan/policy_brief_reader_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -83,7 +85,7 @@ class _RegisterPageState extends State<RegisterPage> {
     } else if (role == 'perusahaan_hijau') {
       return 'Khusus UMKM/Depo Scrap terkurasi Standar MRV Kemenperin.';
     }
-    return 'Khusus Auditor Pemerintah, KLHK, SIINas & Penguji Belmawa.';
+    return 'Khusus Auditor Pemerintah, BPPHLHK RI, SIINas & Inspektur Emisi Industri.';
   }
 
   @override
@@ -701,7 +703,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                     // Keterangan Belmawa
                     const Text(
-                      'Untuk pengujian Belmawa / Kemendikbud, Anda dapat beralih ke portal asal atau memperbarui peran akun ini.',
+                      'Anda dapat langsung beralih ke portal terkait atau memperbarui peran akun ini.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 11.5,
@@ -1120,16 +1122,113 @@ class _RegisterPageState extends State<RegisterPage> {
             child: Container(color: Colors.black.withValues(alpha: 0.62)),
           ),
           SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 22,
-                  vertical: 24,
+            child: Column(
+              children: [
+                // Top Action Bar dengan Padding Lega
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 12, 18, 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          if (Navigator.canPop(context)) {
+                            Navigator.pop(context);
+                          } else {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const OnboardingPage(),
+                              ),
+                            );
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.35),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.white24),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.arrow_back_ios_new_rounded,
+                                color: Colors.white,
+                                size: 12,
+                              ),
+                              SizedBox(width: 5),
+                              Text(
+                                'Kembali',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PolicyBriefReaderPage(
+                              budgetSplit: 55.0,
+                            ),
+                          ),
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF059669).withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFF34D399).withValues(alpha: 0.6),
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.policy_outlined,
+                                color: Color(0xFFA7F3D0),
+                                size: 13,
+                              ),
+                              SizedBox(width: 5),
+                              Text(
+                                'Policy Brief',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
-                  child: Container(
-                    padding: const EdgeInsets.all(26),
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(22, 4, 22, 20),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 420),
+                        child: Container(
+                          padding: const EdgeInsets.all(26),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
@@ -1508,7 +1607,10 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
         ],
       ),
-    );
+    ),
+  ],
+),
+);
   }
 
   Widget _buildCenteredRoleTab({
@@ -1555,16 +1657,18 @@ class _RegisterPageState extends State<RegisterPage> {
                 size: 20,
                 color: isSelected ? activeColor : const Color(0xFF64748B),
               ),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: isSelected ? activeColor : const Color(0xFF475569),
+              const SizedBox(height: 6),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    color: isSelected ? activeColor : const Color(0xFF475569),
+                  ),
                 ),
               ),
             ],

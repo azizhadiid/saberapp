@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'login_page.dart';
 import 'register_page.dart';
 import 'app_manual_page.dart';
+import 'views/pemerintahan/policy_brief_reader_page.dart';
 
 class OnboardingPage extends StatelessWidget {
   const OnboardingPage({super.key});
@@ -23,68 +24,28 @@ class OnboardingPage extends StatelessWidget {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: 22.0,
-                vertical: 18.0,
+                horizontal: 20.0,
+                vertical: 14.0,
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Top Header Bar: Status Ekosistem Tertutup & Tombol Panduan Cepat
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.22),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: const Color(0xFF34D399).withValues(alpha: 0.6),
-                            width: 1,
-                          ),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.verified_user_outlined,
-                              color: Color(0xFF6EE7B7),
-                              size: 13,
-                            ),
-                            SizedBox(width: 5),
-                            Text(
-                              'B2B & G2B TERTUTUP',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AppManualPage(),
-                          ),
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
+                  // Top Header Bar: Status Ekosistem Tertutup & Tombol Panduan Cepat & Policy Brief
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 6.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 5,
+                            horizontal: 10,
+                            vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.16),
+                            color: const Color(0xFF10B981).withValues(alpha: 0.22),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.35),
+                              color: const Color(0xFF34D399).withValues(alpha: 0.6),
                               width: 1,
                             ),
                           ),
@@ -92,24 +53,115 @@ class OnboardingPage extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.menu_book_rounded,
-                                color: Colors.white,
-                                size: 14,
+                                Icons.verified_user_outlined,
+                                color: Color(0xFF6EE7B7),
+                                size: 13,
                               ),
                               SizedBox(width: 5),
                               Text(
-                                'Manual & Kebijakan',
+                                'B2B & G2B TERTUTUP',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ),
-                    ],
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            InkWell(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const PolicyBriefReaderPage(budgetSplit: 55.0),
+                                ),
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF059669).withValues(alpha: 0.35),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: const Color(0xFF34D399).withValues(alpha: 0.5),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.policy_outlined,
+                                      color: Color(0xFFA7F3D0),
+                                      size: 13,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Policy Brief',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            InkWell(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AppManualPage(),
+                                ),
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.16),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.35),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.menu_book_rounded,
+                                      color: Colors.white,
+                                      size: 13,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Panduan',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                   const Spacer(),
                   Container(

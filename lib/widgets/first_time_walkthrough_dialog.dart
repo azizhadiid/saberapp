@@ -516,7 +516,7 @@ class _FirstTimeWalkthroughDialogState
       title: 'Selamat Datang di Portal Regulator',
       subtitle: 'Pusat Kendali Pengawasan Emisi Baja Nasional',
       description:
-          'Akses data pengawasan terpadu SIINas Kemenperin dan KLHK RI guna mengawal peta jalan NZE 2060 sektor industri logam.',
+          'Akses data pengawasan terpadu SIINas Kemenperin dan BPPHLHK RI guna mengawal peta jalan NZE 2060 sektor industri logam.',
       nextAction:
           'Mulai dari menu SIINas Nasional untuk memverifikasi audit MRV pabrik dan UMKM.',
     ),
@@ -534,7 +534,7 @@ class _FirstTimeWalkthroughDialogState
       icon: Icons.description_outlined,
       accentColor: const Color(0xFF047857),
       title: 'Naskah Kebijakan Strategis (Policy Brief)',
-      subtitle: 'Dokumen Rekomendasi Resmi Kemenperin-KLHK',
+      subtitle: 'Dokumen Rekomendasi Resmi Kemenperin-BPPHLHK',
       description:
           'Pelajari 3 pilar rekomendasi kebijakan dekarbonisasi dan unduh naskah formal dalam format PDF cetak 100% vektor bebas error.',
       nextAction:
